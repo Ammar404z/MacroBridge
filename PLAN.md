@@ -67,9 +67,9 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 - [x] Connect to Supabase PostgreSQL via JDBC
 - [x] Auth endpoints: POST /auth/register, POST /auth/login → returns JWT
 - [x] JWT filter (validates token on every request)
-- [ ] Scaffold React + Vite + Tailwind frontend
-- [ ] Login + Signup pages wired to backend
-- [ ] Protected route logic (redirect to login if no token)
+- [x] Scaffold React + Vite + Tailwind frontend
+- [x] Login + Signup pages wired to backend
+- [x] Protected route logic (redirect to login if no token)
 
 ### Phase 2 — Core Loop (Session 2)
 - [ ] POST /meals/analyze — takes text or image, calls Gemini, returns macros
