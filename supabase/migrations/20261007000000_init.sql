@@ -104,6 +104,8 @@ create table meals (
 
 -- GET /api/meals/today → where user_id = ? and log_date = ?
 create index meals_user_date_idx on meals (user_id, log_date);
+-- FK index so deleting a custom food doesn't scan every meal
+create index meals_custom_food_id_idx on meals (custom_food_id);
 
 create trigger meals_updated_at
   before update on meals
