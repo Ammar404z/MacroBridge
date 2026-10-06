@@ -47,7 +47,7 @@ MacroBridge/
 ---
 
 ## Database (fresh Supabase PostgreSQL schema)
-Schema lives in `supabase/migrations/20261007000000_init.sql`.
+Schema lives in `supabase/migrations/20261006000000_init.sql`.
 
 - `users` — email + BCrypt password hash (our own auth, not Supabase Auth)
 - `profiles` — one row per user: macro targets + timezone (defines "today")
