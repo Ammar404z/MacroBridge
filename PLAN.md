@@ -63,10 +63,10 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 ## Build Order
 
 ### Phase 1 — Foundation (Session 1)
-- [ ] Scaffold Spring Boot project (Maven)
-- [ ] Connect to Supabase PostgreSQL via JDBC
-- [ ] Auth endpoints: POST /auth/register, POST /auth/login → returns JWT
-- [ ] JWT filter (validates token on every request)
+- [x] Scaffold Spring Boot project (Maven)
+- [x] Connect to Supabase PostgreSQL via JDBC
+- [x] Auth endpoints: POST /auth/register, POST /auth/login → returns JWT
+- [x] JWT filter (validates token on every request)
 - [ ] Scaffold React + Vite + Tailwind frontend
 - [ ] Login + Signup pages wired to backend
 - [ ] Protected route logic (redirect to login if no token)
@@ -99,8 +99,9 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 
 ### Auth
 ```
-POST /api/auth/register   { email, password, targetCalories, targetProtein, targetCarbs, targetFat }
+POST /api/auth/register   { email, password, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? } → { token, user }
 POST /api/auth/login      { email, password } → { token, user }
+GET  /api/me              → { id, email }   (requires token)
 ```
 
 ### Meals
