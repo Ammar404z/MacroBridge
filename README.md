@@ -21,9 +21,8 @@ AI macro tracker for you and your friends: describe a meal or snap a photo, Gemi
 - [PLAN.md](PLAN.md): stack, API contract, decisions and what's next
 
 ## Setup
-1. Create a Supabase project and run `supabase/migrations/*.sql` in order in the SQL editor
-   (or `supabase link` + `supabase db push`).
-2. Copy `.env.example` to `.env` and fill in the values (database, a random `JWT_SECRET`, and a Gemini key from https://aistudio.google.com/apikey).
+1. Install Docker and the Supabase CLI, then run `supabase start` in the repo root. It runs Postgres locally and applies `supabase/migrations/`.
+2. Copy `.env.example` to `.env` and fill in a random `JWT_SECRET` and a Gemini key from https://aistudio.google.com/apikey. The DB values already point at the local database.
 
 ## Run locally
 ```bash
@@ -32,15 +31,18 @@ cd frontend && npm install && npm run dev # app on http://localhost:5173 (Node 2
 ```
 Both read their settings from the repo-root `.env`.
 
-> **Heads-up:** there's no separate test database yet. Running locally with the same `.env` uses the **live** database, so anything you log while testing shows up in the real app.
+Local development uses the local database, never the live one. Browse it in Studio at http://127.0.0.1:54323. `supabase db reset` wipes it and re-applies all migrations. `supabase stop` shuts it down.
+
+**Schema changes:** add a new file in `supabase/migrations/`, test it with `supabase db reset`, and apply it to the live database only after that (`supabase link --project-ref wkgohhlgqrfajqsbxkuy` once, then `supabase db push`). Push migrations **before** deploying backend code that needs them.
 
 ## Deploy
 | Part | Where | How it updates |
 |---|---|---|
 | Frontend | Vercel (`frontend/` as root) | Automatically on every push to `main` |
-| Backend | Google Cloud Run, service `macrobridge-api`, region `europe-west1` | Manually: `gcloud run deploy macrobridge-api --source backend --region europe-west1 --quiet` |
+| Backend | Google Cloud Run, service `macrobridge-api`, region `europe-west1` | Automatically on every push to `main` that touches `backend/` (GitHub Actions, `.github/workflows/deploy-backend.yml`). By hand: `gcloud run deploy macrobridge-api --source backend --region europe-west1 --quiet` |
 | Database | Supabase (Frankfurt) | Migrations in `supabase/migrations/` |
 
+- The GitHub Action logs in to Google without a stored key (Workload Identity Federation: pool `github`, provider `macrobridge`, service account `github-deployer`, only the `main` branch of this repo is allowed).
 - Vercel needs one variable: `VITE_API_URL` = the Cloud Run URL + `/api` (type Config, not Secret; the browser needs it).
 - The backend's settings (database, `GEMINI_API_KEY`, a production-only `JWT_SECRET`, `CORS_ALLOWED_ORIGINS=https://macro-bridge.vercel.app`) are stored only on Cloud Run. Change one with `gcloud run services update macrobridge-api --region europe-west1 --update-env-vars KEY=value`. Never commit them.
 - Cloud Run runs at most one instance and sleeps when idle, so the first request after a quiet period takes about 6–9 s.
@@ -48,7 +50,7 @@ Both read their settings from the repo-root `.env`.
 ## Settings (`.env`)
 | Variable | Purpose |
 |---|---|
-| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Supabase Postgres (session pooler, JDBC) |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Postgres over JDBC: local Supabase in `.env`; the live Supabase pooler on Cloud Run |
 | `JWT_SECRET` | At least 32 random bytes; signs logins |
 | `JWT_EXPIRATION_HOURS` | Login lifetime, default 2160 (90 days) |
 | `GEMINI_API_KEY` | Meal analysis and meal ideas |

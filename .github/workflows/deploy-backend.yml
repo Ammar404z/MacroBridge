@@ -1,0 +1,26 @@
+# Deploys the backend to Cloud Run when backend code lands on main.
+# Logs in to Google with GitHub's OIDC token (no stored key); setup is in README "Deploy".
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**']
+  workflow_dispatch:
+
+concurrency: deploy-backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/669187541005/locations/global/workloadIdentityPools/github/providers/macrobridge
+          service_account: github-deployer@project-2ca2ba97-8dc7-4ac8-88b.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud run deploy macrobridge-api --source backend --region europe-west1 --quiet
