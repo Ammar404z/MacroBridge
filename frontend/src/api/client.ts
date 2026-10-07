@@ -57,9 +57,71 @@ export type RegisterInput = {
   targetFat?: number
 }
 
+export type Macros = { calories: number; protein: number; carbs: number; fat: number }
+export type MealLabel = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+export type Confidence = 'low' | 'medium' | 'high'
+export type MealItem = Macros & { name: string; portion: string }
+
+export type AnalyzeInput = { description?: string; imageBase64?: string; mimeType?: string }
+export type Analysis = { items: MealItem[]; totals: Macros; confidence: Confidence; notes: string }
+
+export type LogInput = Macros & {
+  description: string
+  mealLabel: MealLabel
+  source: 'text' | 'photo' | 'manual'
+  items?: MealItem[]
+  confidence?: Confidence
+  aiNotes?: string
+}
+
+export type Meal = Macros & {
+  id: string
+  mealLabel: MealLabel
+  description: string
+  source: string
+  servings: number
+  customFoodId: string | null
+  confidence: Confidence | null
+  aiNotes: string | null
+  loggedAt: string
+}
+
+export type Today = { date: string; logs: Meal[]; totals: Macros; targets: Macros }
+
+export type Profile = {
+  displayName: string | null
+  timezone: string
+  targetCalories: number
+  targetProtein: number
+  targetCarbs: number
+  targetFat: number
+}
+
+/** Macros are per serving. */
+export type Food = Macros & { id: string; name: string; servingLabel: string }
+export type FoodInput = Macros & { name: string; servingLabel?: string }
+
+export type Suggestion = Macros & { name: string; description: string }
+export type Suggestions = { remaining: Macros; suggestions: Suggestion[] }
+
 export const api = {
   register: (input: RegisterInput) => request<AuthResponse>('POST', '/auth/register', input),
   login: (email: string, password: string) =>
     request<AuthResponse>('POST', '/auth/login', { email, password }),
   me: () => request<User>('GET', '/me'),
+  analyzeMeal: (input: AnalyzeInput) => request<Analysis>('POST', '/meals/analyze', input),
+  logMeal: (input: LogInput) => request<Meal>('POST', '/meals/log', input),
+  today: () => request<Today>('GET', '/meals/today'),
+  deleteMeal: (id: string) => request<null>('DELETE', `/meals/${id}`),
+  suggestMeals: (ask?: string) => request<Suggestions>('POST', '/meals/suggest', { request: ask }),
+
+  profile: () => request<Profile>('GET', '/profile'),
+  updateProfile: (input: Partial<Profile>) => request<Profile>('PUT', '/profile', input),
+
+  foods: () => request<Food[]>('GET', '/foods'),
+  createFood: (input: FoodInput) => request<Food>('POST', '/foods', input),
+  updateFood: (id: string, input: FoodInput) => request<Food>('PUT', `/foods/${id}`, input),
+  deleteFood: (id: string) => request<null>('DELETE', `/foods/${id}`),
+  logFood: (id: string, servings: number, mealLabel?: MealLabel) =>
+    request<Meal>('POST', `/foods/${id}/log`, { servings, mealLabel }),
 }

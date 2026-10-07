@@ -6,7 +6,7 @@
 | Frontend | React + Vite + Tailwind CSS | Vercel (free) |
 | Backend | Java Spring Boot | Railway (free) |
 | Database | PostgreSQL | Supabase (free, new project) |
-| AI | Gemini 2.0 Flash (vision) | Called from Spring Boot |
+| AI | Gemini 3.5 Flash (vision) | Called from Spring Boot |
 | Auth | Spring Security + JWT | Self-hosted in Spring Boot |
 | PWA | Vite PWA plugin | — |
 
@@ -72,17 +72,17 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 - [x] Protected route logic (redirect to login if no token)
 
 ### Phase 2 — Core Loop (Session 2)
-- [ ] POST /meals/analyze — takes text or image, calls Gemini, returns macros
-- [ ] POST /meals/log — saves confirmed meal to DB
-- [ ] GET /meals/today — returns today's logs + totals
-- [ ] DELETE /meals/{id} — remove a log entry
-- [ ] Dashboard page (macro bars, today's log list)
-- [ ] Log Meal page (type or photo → AI result → confirm/edit → save)
+- [x] POST /meals/analyze — takes text or image, calls Gemini, returns macros
+- [x] POST /meals/log — saves confirmed meal to DB
+- [x] GET /meals/today — returns today's logs + totals
+- [x] DELETE /meals/{id} — remove a log entry
+- [x] Dashboard page (macro bars, today's log list)
+- [x] Log Meal page (type or photo → AI result → confirm/edit → save)
 
 ### Phase 3 — Polish (Session 3)
-- [ ] Profile page (edit macro targets)
-- [ ] Custom food library (save recipes, log with portions)
-- [ ] Meal suggestions based on remaining macros
+- [x] Profile API: GET/PUT /api/profile (page: frontend rework later)
+- [x] Custom food library API: /api/foods CRUD + POST /api/foods/{id}/log with servings (UI later)
+- [x] Meal suggestions API: POST /api/meals/suggest (UI later)
 - [ ] PWA setup (installable on iPhone home screen)
 - [ ] Deploy backend to Railway
 - [ ] Deploy frontend to Vercel
@@ -108,14 +108,28 @@ GET  /api/me              → { id, email }   (requires token)
 ```
 POST /api/meals/analyze   { description?, imageBase64?, mimeType? } → { items, totals, confidence, notes }
 POST /api/meals/log       { description, calories, protein, carbs, fat, mealLabel, confidence, aiNotes }
-GET  /api/meals/today     → { logs[], totals }
+GET  /api/meals/today     → { date, logs[], totals, targets }
 DELETE /api/meals/{id}
 ```
 
 ### Profile
 ```
 GET  /api/profile
-PUT  /api/profile         { targetCalories, targetProtein, targetCarbs, targetFat }
+PUT  /api/profile         { displayName?, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? }  (only sent fields change)
+```
+
+### My foods (macros per serving)
+```
+GET    /api/foods
+POST   /api/foods            { name, servingLabel?, calories, protein, carbs, fat }   (409 on duplicate name)
+PUT    /api/foods/{id}       same body
+DELETE /api/foods/{id}       (past meals keep their macros)
+POST   /api/foods/{id}/log   { servings, mealLabel? } → meal, macros scaled by servings
+```
+
+### Suggestions
+```
+POST /api/meals/suggest   { request? } → { remaining, suggestions[{ name, description, calories, protein, carbs, fat }] }
 ```
 
 ---

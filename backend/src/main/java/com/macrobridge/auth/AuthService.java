@@ -1,7 +1,5 @@
 package com.macrobridge.auth;
 
-import java.time.DateTimeException;
-import java.time.ZoneId;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -16,6 +14,7 @@ import com.macrobridge.auth.AuthDtos.LoginRequest;
 import com.macrobridge.auth.AuthDtos.RegisterRequest;
 import com.macrobridge.auth.AuthDtos.UserDto;
 import com.macrobridge.common.ApiException;
+import com.macrobridge.common.Timezones;
 import com.macrobridge.profile.ProfileRepository;
 
 @Service
@@ -40,7 +39,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest req) {
         String email = normalize(req.email());
-        String timezone = validTimezone(req.timezone());
+        String timezone = Timezones.validOrNull(req.timezone());
         UUID id;
         try {
             id = users.insert(email, passwordEncoder.encode(req.password()));
@@ -70,16 +69,5 @@ public class AuthService {
 
     private static String normalize(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static String validTimezone(String timezone) {
-        if (timezone == null || timezone.isBlank()) {
-            return null;
-        }
-        try {
-            return ZoneId.of(timezone).getId();
-        } catch (DateTimeException e) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "timezone is not a valid IANA time zone");
-        }
     }
 }
