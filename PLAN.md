@@ -3,10 +3,10 @@
 ## Stack
 | Layer | Tech | Hosting |
 |---|---|---|
-| Frontend | React + Vite + Tailwind CSS | Vercel (free) |
-| Backend | Java Spring Boot | Railway (free) |
-| Database | PostgreSQL | Supabase (free, new project) |
-| AI | Gemini 3.5 Flash (vision) | Called from Spring Boot |
+| Frontend | React 19 + Vite + Tailwind CSS v4 | Vercel (free), https://macro-bridge.vercel.app |
+| Backend | Java 21, Spring Boot 4 | Google Cloud Run (free trial / free tier), `europe-west1` |
+| Database | PostgreSQL | Supabase (free, Frankfurt) |
+| AI | Gemini 3.5 Flash-Lite (vision) | Called from Spring Boot |
 | Auth | Spring Security + JWT | Self-hosted in Spring Boot |
 | PWA | Static manifest + icons in `frontend/public` (no plugin) | — |
 
@@ -15,44 +15,41 @@
 ## Folder Structure
 ```
 MacroBridge/
-├── backend/          ← Spring Boot project
+├── backend/                 ← Spring Boot API (Dockerfile for Cloud Run)
+│   └── src/main/java/com/macrobridge/
+│       ├── auth/            ← register, login, JWT, change password
+│       ├── meal/            ← analyze, log, day/history, edit, suggest
+│       ├── food/            ← my foods + logging them by servings
+│       ├── friend/          ← invites, requests, friends' days, feed, avatars endpoint
+│       ├── profile/         ← targets, timezone, sharing switch, profile pictures
+│       ├── gemini/          ← Gemini client + per-user daily AI cap
+│       ├── config/          ← security, CORS
+│       └── common/          ← { data, error } envelope, errors, timezones
+├── frontend/                ← React + Vite PWA (vercel.json, manifest + icons in public/)
 │   └── src/
-│       └── main/
-│           ├── java/com/macrobridge/
-│           │   ├── auth/         ← JWT, login, signup
-│           │   ├── food/         ← log meals, get daily totals
-│           │   ├── gemini/       ← Gemini API integration
-│           │   ├── profile/      ← user targets
-│           │   └── config/       ← security, CORS
-│           └── resources/
-│               └── application.properties
-└── frontend/         ← React + Vite project
-    └── src/
-        ├── pages/
-        │   ├── Login.tsx
-        │   ├── Signup.tsx
-        │   ├── Dashboard.tsx    ← today's macros
-        │   ├── Log.tsx          ← type or photo → AI → confirm
-        │   └── Profile.tsx      ← edit targets
-        ├── components/
-        │   ├── MacroBar.tsx
-        │   ├── MealCard.tsx
-        │   └── PhotoUpload.tsx
-        ├── api/
-        │   └── client.ts        ← all fetch calls to Spring Boot
-        └── hooks/
-            └── useAuth.ts
+│       ├── pages/           ← Today, LogMeal, EditMeal, Suggest, Foods, FoodLog, FoodEdit,
+│       │                      Friends, FriendProfile, Invite, Profile, ChangePassword, Login, Signup
+│       ├── components/      ← ui.tsx (shared pieces), TabBar, CalorieRing, Avatar, icons
+│       ├── api/client.ts    ← all calls to the backend
+│       ├── hooks/useAuth.tsx
+│       └── lib/             ← formatting, dates, image resizing
+├── supabase/migrations/     ← schema, applied in order
+└── design/                  ← DESIGN.md + HTML mockups
 ```
 
 ---
 
 ## Database (fresh Supabase PostgreSQL schema)
-Schema lives in `supabase/migrations/20261006000000_init.sql`.
+Schema lives in `supabase/migrations/` (init, hardening, friends_and_avatars, ai_usage).
 
 - `users` — email + BCrypt password hash (our own auth, not Supabase Auth)
 - `profiles` — one row per user: macro targets + timezone (defines "today")
 - `meals` — confirmed log entries: macros, `log_date`, meal label, source, Gemini item breakdown (`jsonb`), confidence, notes
 - `custom_foods` — personal food/recipe library, macros per serving
+- `friendships` — one row per pair, `pending` until the addressee accepts (deleting = decline/cancel/unfriend)
+- `avatars` — profile pictures as small JPEGs (`bytea`)
+- `ai_usage` — AI calls per user per day, for the daily cap
+- `profiles` also holds `share_meals` and the personal `invite_code`
 - `pantry_items` — deferred to Phase 4, added in its own migration then
 
 Spring Boot connects via JDBC as the `postgres` role (no Supabase SDK needed — just plain Postgres).
@@ -80,12 +77,30 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 - [x] Log Meal page (type or photo → AI result → confirm/edit → save)
 
 ### Phase 3 — Polish (Session 3)
-- [x] Profile API: GET/PUT /api/profile (page: frontend rework later)
-- [x] Custom food library API: /api/foods CRUD + POST /api/foods/{id}/log with servings (UI later)
-- [x] Meal suggestions API: POST /api/meals/suggest (UI later)
+- [x] Profile API: GET/PUT /api/profile
+- [x] Custom food library API: /api/foods CRUD + POST /api/foods/{id}/log with servings
+- [x] Meal suggestions API: POST /api/meals/suggest
 - [x] PWA setup (installable on iPhone home screen: manifest, icons, full-screen status bar)
-- [ ] Deploy backend to Railway
-- [ ] Deploy frontend to Vercel
+- [x] Deploy backend (Google Cloud Run instead of Railway: Railway no longer has a usable free tier for Java)
+- [x] Deploy frontend to Vercel
+
+### Phase 3.5 — Design + real use (done)
+- [x] "Instrument" dark design from `design/` on every screen, with the 5-tab bar
+- [x] My foods, Log a food (servings), Edit food, Meal ideas, Profile screens
+- [x] Photo + text analysis combine; AI meal title as the default description
+- [x] Friends: invite links, mutual requests, rings, 24h feed with "Log this", friend day view, sharing switch, request badge
+- [x] Profile pictures, display name at signup, change password, logout confirmation
+- [x] Past days (‹ › on Today), adding to a past day, editing/moving a logged meal
+- [x] 90-day logins, automatic logout when a login stops working, loading states
+- [x] Per-user daily AI cap; Gemini Flash-Lite for the free tier's ~500 requests/day
+
+### Next up
+- [ ] **Test environment**: a separate free Supabase project for local development, so testing doesn't touch the live data (maybe a staging backend later)
+- [ ] Automatic backend deploys on push (Cloud Build trigger or GitHub Actions)
+- [ ] History chart (calories per day over 30 days; `GET /api/meals/history` already exists)
+- [ ] Delete account
+- [ ] Forgot password by email (needs an email service)
+- [ ] Meal type on past days defaults to the current time of day; pick a smarter default
 
 ### Phase 4 — Scale (Future)
 - [ ] Custom domain
@@ -99,7 +114,7 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 
 ### Auth
 ```
-POST /api/auth/register   { email, password, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? } → { token, user }
+POST /api/auth/register   { email, password, displayName?, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? } → { token, user }
 POST /api/auth/login      { email, password } → { token, user }
 GET  /api/me              → { id, email }   (requires token)
 PUT  /api/me/password     { currentPassword, newPassword }
@@ -167,13 +182,14 @@ POST /api/meals/suggest   { request? } → { remaining, suggestions[{ name, desc
 - CORS configured in Spring Boot to allow requests from the Vercel domain
 - Images sent as base64 strings in the request body (no file upload server needed)
 - All responses use standard `{ data, error }` envelope
+- Logins last 90 days; any 401 from the API logs the app out
+- Friends are mutual and opt-in (invite link → request → accept); sharing is on by default and can be turned off
+- Profile pictures live in Postgres (no file storage service) and are only served to yourself, friends and pending requests
+- Meal ideas are single meals sized to roughly a third to a half of what's left, not a plan for the rest of the day
+- Secrets only in `.env` locally and in Cloud Run settings in production; the live app has its own `JWT_SECRET`
 
 ---
 
-## Session 1 Goal
-By end of this session:
-✅ Spring Boot running locally
-✅ Connected to Supabase Postgres
-✅ Register + login working (Postman or frontend)
-✅ React app running locally
-✅ Login/signup UI working end-to-end
+## Deployment
+See the README's "Deploy" section: Vercel redeploys the frontend on every push; the backend is redeployed with
+`gcloud run deploy macrobridge-api --source backend --region europe-west1 --quiet`.

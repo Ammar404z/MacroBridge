@@ -85,19 +85,21 @@ Font: Manrope, weights 400, 500, 600, 700 (Google Fonts). Use `font-variant-nume
 | `FoodLog.html` | `/foods/:id/log` | `POST /api/foods/{id}/log` |
 | `FoodEdit.html` | `/foods/:id` and `/foods/new` (same screen, empty, no Delete) | `POST`, `PUT`, `DELETE /api/foods` |
 | `Profile.html` | `/profile` | `GET`, `PUT /api/profile`; Log out lives here now |
-| `Friends.html` | `/friends` | **No backend yet (concept)** |
-| `FriendProfile.html` | `/friends/:id` | **No backend yet (concept)** |
+| `Friends.html` | `/friends` | `GET /api/friends`, accept/decline, invite link share |
+| `FriendProfile.html` | `/friends/:id` | `GET /api/friends/{id}`, `DELETE` to unfriend |
 | `AppIcon.html` | PWA icon source, 512 x 512 | none |
 
 Navigation: Meal ideas is opened from the "Meal ideas for what's left" row on Today. "Pick from my foods" on Log a meal goes to My foods. Tapping a food row opens Edit food; its "Log" pill opens Log a food.
 
-## Not designed yet
+## Built since the handoff (not in the mockups)
 
-- Signup, the "Enter macros manually" state of Log a meal, empty states, loading states, error states.
-- The search field on My foods filters the list client-side; there is no search endpoint.
+These follow the same tokens and components:
 
-## Needs backend work
+- Signup (Login layout plus name and daily targets), the "Enter macros" manual state, empty, loading and error states.
+- `/invite/:code`: the page a friend's invite link opens (logged-out visitors sign up or log in first, then return to it).
+- `/meals/:id`: Edit meal (tap a meal on Today), including moving it to another day.
+- `/profile/password`: Change password. Profile also has the picture, the "Friends can see my meals" switch, and a logout confirmation.
+- Today: ‹ › arrows for past days, and "Add a meal to this day" in place of Meal ideas on past days.
+- Friends tab: a lime badge with the number of incoming requests.
 
-- Friends: following or friend requests, a feed of friends' meals, reading another user's day, and "Log this" from a friend's meal.
-- The "Friends can see my meals" switch on Profile (a visibility setting on `profiles`). Keep sharing limited to approved friends.
-- Open decision: Meal ideas is drawn as three single meals, not a plan for the rest of the day.
+Decisions taken on the open points: friendships are mutual (request via invite link, then accept); friends see the whole day as mocked; sharing is on by default; the Friend profile button reads "Friends ✓" and removes the friend after a confirmation; Meal ideas are three single meals.
