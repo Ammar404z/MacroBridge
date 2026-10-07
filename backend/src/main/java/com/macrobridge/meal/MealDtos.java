@@ -49,13 +49,15 @@ public final class MealDtos {
             @Pattern(regexp = "text|photo|manual") String source,
             @Valid @Size(max = 50) List<MealItem> items,
             @Pattern(regexp = "low|medium|high") String confidence,
-            @Size(max = 1000) String aiNotes) {}
+            @Size(max = 1000) String aiNotes,
+            // Optional: log to a past day (e.g. a forgotten dinner); defaults to today
+            LocalDate logDate) {}
 
     public record MealDto(
             UUID id, String mealLabel, String description, String source,
             int calories, double protein, double carbs, double fat,
             double servings, UUID customFoodId,
-            String confidence, String aiNotes, OffsetDateTime loggedAt) {}
+            String confidence, String aiNotes, OffsetDateTime loggedAt, LocalDate logDate) {}
 
     public record SuggestRequest(@Size(max = 300) String request) {}
 

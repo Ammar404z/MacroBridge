@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { api, type FoodInput } from '../api/client'
-import { ErrorMessage, Field, FlowScreen, PrimaryButton, SectionTitle, TextButton } from '../components/ui'
+import { ErrorMessage, Field, FlowScreen, Loading, PrimaryButton, SectionTitle, TextButton } from '../components/ui'
 
 const EMPTY: FoodInput = { name: '', servingLabel: '', calories: 0, protein: 0, carbs: 0, fat: 0 }
 
@@ -67,6 +67,7 @@ export default function FoodEdit() {
           {!isNew && <TextButton danger onClick={remove} disabled={busy}>Delete food</TextButton>}
         </>}
       >
+        {!form && !error && <Loading />}
         {form && (
           <>
             <section className="mt-4 flex flex-col gap-4">

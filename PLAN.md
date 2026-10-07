@@ -8,7 +8,7 @@
 | Database | PostgreSQL | Supabase (free, new project) |
 | AI | Gemini 3.5 Flash (vision) | Called from Spring Boot |
 | Auth | Spring Security + JWT | Self-hosted in Spring Boot |
-| PWA | Vite PWA plugin | — |
+| PWA | Static manifest + icons in `frontend/public` (no plugin) | — |
 
 ---
 
@@ -83,7 +83,7 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 - [x] Profile API: GET/PUT /api/profile (page: frontend rework later)
 - [x] Custom food library API: /api/foods CRUD + POST /api/foods/{id}/log with servings (UI later)
 - [x] Meal suggestions API: POST /api/meals/suggest (UI later)
-- [ ] PWA setup (installable on iPhone home screen)
+- [x] PWA setup (installable on iPhone home screen: manifest, icons, full-screen status bar)
 - [ ] Deploy backend to Railway
 - [ ] Deploy frontend to Vercel
 
@@ -102,16 +102,19 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 POST /api/auth/register   { email, password, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? } → { token, user }
 POST /api/auth/login      { email, password } → { token, user }
 GET  /api/me              → { id, email }   (requires token)
+PUT  /api/me/password     { currentPassword, newPassword }
 ```
 
 ### Meals
 ```
 POST /api/meals/analyze   { description?, imageBase64?, mimeType? } → { items, totals, title, confidence, notes }
+                          (analyze + suggest share a per-user daily cap, AI_DAILY_LIMIT, default 50 → 429)
                           (photo + text combine: text adds items the photo doesn't show and clarifies what it does)
-POST /api/meals/log       { description, calories, protein, carbs, fat, mealLabel, confidence, aiNotes }
+POST /api/meals/log       { description, calories, protein, carbs, fat, mealLabel, confidence, aiNotes, logDate? }  (logDate: a past day; default today)
 GET  /api/meals/today     → { date, logs[], totals, targets }
 GET  /api/meals/day/{date} → same shape, for any day (YYYY-MM-DD)
 GET  /api/meals/history?days=30 → { from, to, targets, days[{ date, meals, totals }] }  (days with meals only)
+GET  /api/meals/{id}      → meal (incl. logDate)
 PUT  /api/meals/{id}      { description, calories, protein, carbs, fat, mealLabel?, logDate? }  (logDate can't be in the future)
 DELETE /api/meals/{id}
 ```
@@ -119,7 +122,7 @@ DELETE /api/meals/{id}
 ### Profile
 ```
 GET  /api/profile
-PUT  /api/profile         { displayName?, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat? }  (only sent fields change)
+PUT  /api/profile         { displayName?, timezone?, targetCalories?, targetProtein?, targetCarbs?, targetFat?, shareMeals? }  (only sent fields change)
 ```
 
 ### My foods (macros per serving)
@@ -128,7 +131,27 @@ GET    /api/foods
 POST   /api/foods            { name, servingLabel?, calories, protein, carbs, fat }   (409 on duplicate name)
 PUT    /api/foods/{id}       same body
 DELETE /api/foods/{id}       (past meals keep their macros)
-POST   /api/foods/{id}/log   { servings, mealLabel? } → meal, macros scaled by servings
+POST   /api/foods/{id}/log   { servings, mealLabel?, logDate? } → meal, macros scaled by servings
+```
+
+### Friends (mutual: request via invite link, then accept)
+```
+GET    /api/friends            → { inviteCode, friends[{ id, name, avatarVersion, sharing, totals, targets }],
+                                   incoming[], outgoing[], feed[last 24h of friends' meals] }
+GET    /api/friends/requests   → { incoming }   (badge count on the Friends tab)
+GET    /api/friends/{id}       → { id, name, avatarVersion, sharing, day }   (accepted friends only)
+POST   /api/friends/{id}/accept
+DELETE /api/friends/{id}       (decline, cancel, or unfriend)
+GET    /api/invites/{code}     → { person, relation: self|none|requested|incoming|friends }
+POST   /api/invites/{code}     → send a request (accepts instead if they already asked you)
+```
+Invite links look like `/invite/<code>`. Friends see each other's whole day unless `shareMeals` is off.
+
+### Profile pictures
+```
+PUT    /api/profile/avatar   { imageBase64 }   (256 px square JPEG, made by the frontend)
+DELETE /api/profile/avatar
+GET    /api/avatars/{userId}?v=<avatarVersion>  → image/jpeg   (yourself, friends, and pending requests only)
 ```
 
 ### Suggestions

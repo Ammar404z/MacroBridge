@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.macrobridge.auth.AuthDtos.AuthResponse;
+import com.macrobridge.auth.AuthDtos.ChangePasswordRequest;
 import com.macrobridge.auth.AuthDtos.LoginRequest;
 import com.macrobridge.auth.AuthDtos.RegisterRequest;
 import com.macrobridge.auth.AuthDtos.UserDto;
@@ -46,7 +47,8 @@ public class AuthService {
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "An account with this email already exists");
         }
-        profiles.insert(id, timezone, req.targetCalories(),
+        String name = req.displayName() == null || req.displayName().isBlank() ? null : req.displayName().trim();
+        profiles.insert(id, name, timezone, req.targetCalories(),
                 req.targetProtein(), req.targetCarbs(), req.targetFat());
         return new AuthResponse(jwtService.issue(id, email), new UserDto(id, email));
     }
@@ -59,6 +61,15 @@ public class AuthService {
         }
         var u = user.get();
         return new AuthResponse(jwtService.issue(u.id(), u.email()), new UserDto(u.id(), u.email()));
+    }
+
+    public void changePassword(UUID userId, ChangePasswordRequest req) {
+        var user = users.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Account no longer exists"));
+        if (!passwordEncoder.matches(req.currentPassword(), user.passwordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Current password is wrong");
+        }
+        users.updatePassword(userId, passwordEncoder.encode(req.newPassword()));
     }
 
     public UserDto me(UUID userId) {

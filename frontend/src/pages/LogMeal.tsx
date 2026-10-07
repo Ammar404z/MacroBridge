@@ -1,32 +1,17 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api, type Analysis, type LogInput } from '../api/client'
 import { CameraIcon, ChevronIcon, FoodsIcon } from '../components/icons'
 import {
-  Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PrimaryButton, TextArea, TextButton,
+  Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PastDayNote, PrimaryButton, TextArea, TextButton,
 } from '../components/ui'
-import { capitalize, labelForNow, num } from '../lib/format'
-
-/** Shrinks a photo to a JPEG at most 1280px wide/tall so uploads stay small. */
-async function toJpegBase64(file: File): Promise<string> {
-  const url = URL.createObjectURL(file)
-  try {
-    const img = new Image()
-    img.src = url
-    await img.decode()
-    const scale = Math.min(1, 1280 / Math.max(img.width, img.height))
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(img.width * scale)
-    canvas.height = Math.round(img.height * scale)
-    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
-  } finally {
-    URL.revokeObjectURL(url)
-  }
-}
+import { capitalize, dateQuery, labelForNow, num } from '../lib/format'
+import { toJpegBase64 } from '../lib/image'
 
 export default function LogMeal() {
   const navigate = useNavigate()
+  // Set when adding a meal to a past day from Today's arrows
+  const date = useSearchParams()[0].get('date')
   const [description, setDescription] = useState('')
   const [photo, setPhoto] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -101,8 +86,8 @@ export default function LogMeal() {
         await api.createFood({ name, calories, protein, carbs, fat })
         setFoodSaved(true)
       }
-      await api.logMeal(form)
-      navigate('/', { replace: true })
+      await api.logMeal({ ...form, logDate: date ?? undefined })
+      navigate(`/${dateQuery(date)}`, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
       setBusy(false)
@@ -124,6 +109,7 @@ export default function LogMeal() {
             <TextButton onClick={startOver}>Start over</TextButton>
           </>}
         >
+          {date && <PastDayNote date={date} />}
           {analysis && (
             <Card className="mt-3 flex flex-col gap-2">
               {analysis.items.map((item, i) => (
@@ -159,12 +145,13 @@ export default function LogMeal() {
     <form onSubmit={analyze} className="contents">
       <FlowScreen
         title="Log a meal"
-        back="/"
+        back={`/${dateQuery(date)}`}
         actions={<>
           <PrimaryButton busy={busy} busyLabel="Analyzing…">Analyze</PrimaryButton>
           <TextButton onClick={enterManually}>Enter macros manually</TextButton>
         </>}
       >
+        {date && <PastDayNote date={date} />}
         <section className="mt-5 flex flex-col gap-4">
           <TextArea label="What did you eat?" rows={4} maxLength={500} value={description}
             onChange={(e) => setDescription(e.target.value)} placeholder="e.g. 2 eggs, toast with butter, a latte"
@@ -191,7 +178,7 @@ export default function LogMeal() {
             </button>
           )}
 
-          <Link to="/foods" className="flex h-13 items-center gap-2.5 rounded-[14px] bg-surface pr-2.5 pl-3.5 hover:bg-surface-2">
+          <Link to={`/foods${dateQuery(date)}`} className="flex h-13 items-center gap-2.5 rounded-[14px] bg-surface pr-2.5 pl-3.5 hover:bg-surface-2">
             <FoodsIcon size={20} className="text-muted" />
             <span className="flex-1 text-sm font-semibold">Pick from my foods</span>
             <ChevronIcon className="text-muted" />

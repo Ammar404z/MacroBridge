@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.macrobridge.common.ApiException;
 import com.macrobridge.food.FoodRepository;
 import com.macrobridge.food.FoodRepository.Food;
+import com.macrobridge.gemini.AiQuota;
 import com.macrobridge.gemini.GeminiClient;
 import com.macrobridge.meal.MealDtos.AnalyzeRequest;
 import com.macrobridge.meal.MealDtos.Analysis;
@@ -35,18 +36,20 @@ public class MealService {
     private final ProfileRepository profiles;
     private final FoodRepository foods;
     private final GeminiClient gemini;
+    private final AiQuota quota;
     private final JsonMapper json;
 
     public MealService(MealRepository meals, ProfileRepository profiles, FoodRepository foods,
-                       GeminiClient gemini, JsonMapper json) {
+                       GeminiClient gemini, AiQuota quota, JsonMapper json) {
         this.meals = meals;
         this.profiles = profiles;
         this.foods = foods;
         this.gemini = gemini;
+        this.quota = quota;
         this.json = json;
     }
 
-    public Analysis analyze(AnalyzeRequest req) {
+    public Analysis analyze(UUID userId, AnalyzeRequest req) {
         boolean hasText = req.description() != null && !req.description().isBlank();
         boolean hasImage = req.imageBase64() != null && !req.imageBase64().isBlank();
         if (!hasText && !hasImage) {
@@ -55,6 +58,7 @@ public class MealService {
         if (hasImage && req.mimeType() == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "mimeType is required with an image");
         }
+        quota.use(userId);
         var result = gemini.analyze(req.description(), hasImage ? req.imageBase64() : null, req.mimeType());
         if (result.items() == null || result.items().isEmpty()) {
             throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "Couldn't recognize any food, try describing it");
@@ -67,18 +71,19 @@ public class MealService {
 
     public MealDto log(UUID userId, LogRequest req) {
         String items = req.items() == null || req.items().isEmpty() ? null : json.writeValueAsString(req.items());
-        return meals.insert(userId, today(profile(userId)), req, items, null, 1);
+        return meals.insert(userId, logDate(userId, req.logDate()), req, items, null, 1);
     }
 
-    public MealDto logFood(UUID userId, Food food, double servings, String mealLabel) {
+    /** logDate is optional (null = today), like for /log. */
+    public MealDto logFood(UUID userId, Food food, double servings, String mealLabel, LocalDate logDate) {
         var req = new LogRequest(
                 servings == 1 ? food.name() : food.name() + " × " + BigDecimal.valueOf(servings).stripTrailingZeros().toPlainString(),
                 (int) Math.round(food.calories() * servings),
                 round1(food.protein() * servings),
                 round1(food.carbs() * servings),
                 round1(food.fat() * servings),
-                mealLabel, "custom_food", null, null, null);
-        return meals.insert(userId, today(profile(userId)), req, null, food.id(), servings);
+                mealLabel, "custom_food", null, null, null, null);
+        return meals.insert(userId, logDate(userId, logDate), req, null, food.id(), servings);
     }
 
     public DayResponse today(UUID userId) {
@@ -109,6 +114,7 @@ public class MealService {
                 .map(f -> "%s (%s): %d kcal, P %.1f, C %.1f, F %.1f".formatted(
                         f.name(), f.servingLabel(), f.calories(), f.protein(), f.carbs(), f.fat()))
                 .toList();
+        quota.use(userId);
         return new SuggestResponse(remaining, gemini.suggest(remaining, eaten, myFoods, request));
     }
 
@@ -125,10 +131,12 @@ public class MealService {
         return new HistoryResponse(from, to, targets, summaries);
     }
 
+    public MealDto find(UUID userId, UUID mealId) {
+        return meals.find(userId, mealId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Meal not found"));
+    }
+
     public MealDto edit(UUID userId, UUID mealId, EditMealRequest req) {
-        if (req.logDate() != null && req.logDate().isAfter(today(profile(userId)))) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "logDate can't be in the future");
-        }
+        if (req.logDate() != null) logDate(userId, req.logDate());
         return meals.update(userId, mealId, req)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Meal not found"));
     }
@@ -142,6 +150,16 @@ public class MealService {
     private ProfileRow profile(UUID userId) {
         return profiles.find(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Account no longer exists"));
+    }
+
+    /** The day a meal goes on: the requested one (today or earlier), or today when none is given. */
+    private LocalDate logDate(UUID userId, LocalDate requested) {
+        LocalDate today = today(profile(userId));
+        if (requested == null) return today;
+        if (requested.isAfter(today)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "logDate can't be in the future");
+        }
+        return requested;
     }
 
     /** "Today" is the user's local date, so a late dinner doesn't land on tomorrow's log. */

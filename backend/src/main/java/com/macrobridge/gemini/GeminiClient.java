@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -193,6 +194,11 @@ public class GeminiClient {
         Response res;
         try {
             res = http.post().body(body).retrieve().body(Response.class);
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            // The shared Gemini quota (per project, per day) is used up
+            log.warn("Gemini quota exceeded: {}", e.getMessage());
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "The AI has hit its daily limit. Try again later, or enter macros manually.");
         } catch (RestClientException e) {
             log.warn("Gemini request failed", e);
             throw unavailable();

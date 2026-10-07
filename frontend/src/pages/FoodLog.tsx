@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { api, type Food, type MealLabel, type Today } from '../api/client'
 import { MinusIcon, PlusIcon } from '../components/icons'
-import { Card, ErrorMessage, FlowScreen, MacroStats, MealSegment, PrimaryButton, TextButton } from '../components/ui'
-import { labelForNow, num, pcf, scale } from '../lib/format'
+import { Card, ErrorMessage, FlowScreen, Loading, MacroStats, MealSegment, PastDayNote, PrimaryButton, TextButton } from '../components/ui'
+import { dateQuery, labelForNow, num, pcf, scale } from '../lib/format'
 
 const STEP = 0.5
 
 export default function FoodLog() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const date = useSearchParams()[0].get('date')
   const [food, setFood] = useState<Food | null>(null)
   const [today, setToday] = useState<Today | null>(null)
   const [servings, setServings] = useState(1)
@@ -26,16 +27,16 @@ export default function FoodLog() {
         else setError('Food not found')
       })
       .catch((e) => setError(e.message))
-    api.today().then(setToday).catch(() => {})
-  }, [id])
+    ;(date ? api.day(date) : api.today()).then(setToday).catch(() => {})
+  }, [id, date])
 
   async function log() {
     if (!food) return
     setError(null)
     setBusy(true)
     try {
-      await api.logFood(food.id, servings, mealLabel)
-      navigate('/', { replace: true })
+      await api.logFood(food.id, servings, mealLabel, date ?? undefined)
+      navigate(`/${dateQuery(date)}`, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not log this')
       setBusy(false)
@@ -49,7 +50,7 @@ export default function FoodLog() {
   return (
     <FlowScreen
       title="Log a food"
-      back="/foods"
+      back={`/foods${dateQuery(date)}`}
       actions={food && <>
         <PrimaryButton type="button" onClick={log} busy={busy}>
           Log {servingsText} serving{servings === 1 ? '' : 's'}
@@ -57,7 +58,9 @@ export default function FoodLog() {
         <TextButton to={`/foods/${food.id}`}>Edit this food</TextButton>
       </>}
     >
+      {date && <PastDayNote date={date} />}
       <ErrorMessage message={error} />
+      {!food && !error && <Loading />}
       {food && adds && (
         <>
           <Card className="mt-3 flex flex-col gap-1.5 py-4">
@@ -86,8 +89,8 @@ export default function FoodLog() {
             {leftAfter != null && (
               <div className="border-t border-line pt-2.5 text-[13px] text-muted">
                 {leftAfter >= 0
-                  ? `Leaves you ${num(leftAfter)} kcal for today.`
-                  : `Puts you ${num(-leftAfter)} kcal over today's target.`}
+                  ? `Leaves you ${num(leftAfter)} kcal for ${date ? 'that day' : 'today'}.`
+                  : `Puts you ${num(-leftAfter)} kcal over ${date ? "that day's" : "today's"} target.`}
               </div>
             )}
           </section>

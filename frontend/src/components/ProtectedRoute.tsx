@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import { pendingInvite } from '../lib/format'
 
 /** Shows the page only when logged in; otherwise sends the user to /login. */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -12,10 +13,16 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   return children
 }
 
-/** The opposite: login/signup pages bounce logged-in users to the dashboard. */
+/**
+ * The opposite: login/signup pages bounce logged-in users to Today, or back to the
+ * friend invite they opened before logging in.
+ */
 export function GuestRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   if (loading) return null
-  if (user) return <Navigate to="/" replace />
+  if (user) {
+    const invite = pendingInvite.get()
+    return <Navigate to={invite ? `/invite/${invite}` : '/'} replace />
+  }
   return children
 }

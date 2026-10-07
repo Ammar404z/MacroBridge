@@ -25,7 +25,7 @@ public class MealRepository {
 
     private static final String COLUMNS = """
             id, meal_label, description, source, calories, protein, carbs, fat,
-            servings, custom_food_id, confidence, ai_notes, logged_at
+            servings, custom_food_id, confidence, ai_notes, logged_at, log_date
             """;
 
     /**
@@ -58,6 +58,14 @@ public class MealRepository {
                 .param("servings", servings)
                 .query(MealDto.class)
                 .single();
+    }
+
+    public Optional<MealDto> find(UUID userId, UUID id) {
+        return jdbc.sql("select " + COLUMNS + " from meals where id = :id and user_id = :userId")
+                .param("id", id)
+                .param("userId", userId)
+                .query(MealDto.class)
+                .optional();
     }
 
     public List<MealDto> findByDate(UUID userId, LocalDate logDate) {

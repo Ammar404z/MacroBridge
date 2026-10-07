@@ -19,6 +19,8 @@ public final class AuthDtos {
             @NotBlank @Email @Size(max = 254) String email,
             // BCrypt only looks at the first 72 bytes
             @NotBlank @Size(min = 8, max = 72) String password,
+            // Shown to friends; falls back to the part of the email before the @
+            @Size(max = 100) String displayName,
             @Size(max = 64) String timezone,
             @Min(0) @Max(20000) Integer targetCalories,
             @DecimalMin("0") @Digits(integer = 5, fraction = 1) BigDecimal targetProtein,
@@ -26,6 +28,10 @@ public final class AuthDtos {
             @DecimalMin("0") @Digits(integer = 5, fraction = 1) BigDecimal targetFat) {}
 
     public record LoginRequest(@NotBlank String email, @NotBlank String password) {}
+
+    public record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = 8, max = 72) String newPassword) {}
 
     public record UserDto(UUID id, String email) {}
 

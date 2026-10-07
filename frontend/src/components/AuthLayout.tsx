@@ -19,7 +19,7 @@ export function AuthLayout({ title, subtitle, footer, children }: {
   children: ReactNode
 }) {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-6 pb-[max(24px,env(safe-area-inset-bottom))]">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-6 pt-[env(safe-area-inset-top)] pb-[max(24px,env(safe-area-inset-bottom))]">
       <section className="mt-[max(48px,12vh)] flex flex-col items-start gap-5">
         <LogoMark />
         <div className="flex flex-col gap-2">

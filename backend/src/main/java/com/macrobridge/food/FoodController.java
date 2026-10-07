@@ -1,5 +1,6 @@
 package com.macrobridge.food;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,7 +48,8 @@ public class FoodController {
 
     public record LogFoodRequest(
             @DecimalMin(value = "0", inclusive = false) @DecimalMax("100") double servings,
-            @Pattern(regexp = "breakfast|lunch|dinner|snack") String mealLabel) {}
+            @Pattern(regexp = "breakfast|lunch|dinner|snack") String mealLabel,
+            LocalDate logDate) {}
 
     private final FoodRepository foods;
     private final MealService mealService;
@@ -95,7 +97,7 @@ public class FoodController {
                              @Valid @RequestBody LogFoodRequest req) {
         UUID userId = userId(jwt);
         Food food = foods.find(userId, id).orElseThrow(FoodController::notFound);
-        return ApiResponse.ok(mealService.logFood(userId, food, req.servings(), req.mealLabel()));
+        return ApiResponse.ok(mealService.logFood(userId, food, req.servings(), req.mealLabel(), req.logDate()));
     }
 
     private static UUID userId(Jwt jwt) {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api, ApiError, getToken, setToken, type RegisterInput, type User } from '../api/client'
+import { api, ApiError, getToken, LOGGED_OUT, setToken, type RegisterInput, type User } from '../api/client'
 
 type AuthContextValue = {
   user: User | null
@@ -25,6 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (e instanceof ApiError && e.status === 401) setToken(null)
       })
       .finally(() => setLoading(false))
+  }, [])
+
+  // Any request that finds the login expired sends the user back to the login screen
+  useEffect(() => {
+    const onLoggedOut = () => setUser(null)
+    window.addEventListener(LOGGED_OUT, onLoggedOut)
+    return () => window.removeEventListener(LOGGED_OUT, onLoggedOut)
   }, [])
 
   const value: AuthContextValue = {

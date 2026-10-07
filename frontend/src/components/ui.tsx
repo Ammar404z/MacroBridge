@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
 import { Link, useNavigate } from 'react-router'
 import type { Macros, MealLabel } from '../api/client'
-import { capitalize, MEAL_LABELS, num } from '../lib/format'
+import { capitalize, MEAL_LABELS, num, shortDate } from '../lib/format'
 import { BackIcon } from './icons'
 import { TabBar } from './TabBar'
 
@@ -13,7 +13,7 @@ import { TabBar } from './TabBar'
 export function TabScreen({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto min-h-dvh max-w-lg pb-[calc(84px+env(safe-area-inset-bottom))]">
-      <main className="flex flex-col px-5 pt-4 pb-6">{children}</main>
+      <main className="flex flex-col px-5 pt-[calc(16px+env(safe-area-inset-top))] pb-6">{children}</main>
       <TabBar />
     </div>
   )
@@ -30,7 +30,7 @@ export function FlowScreen({ title, back, actions, children }: {
   children: ReactNode
 }) {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 pt-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 pt-[calc(16px+env(safe-area-inset-top))] pb-[max(16px,env(safe-area-inset-bottom))]">
       <header className="-ml-3 flex h-11 items-center gap-1">
         <BackButton back={back} />
         <h1 className="text-xl font-bold tracking-[-0.02em]">{title}</h1>
@@ -51,12 +51,18 @@ function BackButton({ back }: { back: string | (() => void) }) {
   )
 }
 
-/** Title row for tab pages, with an optional subtitle and right-hand action. */
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+/** Title row for tab pages, with an optional back arrow, subtitle and right-hand action. */
+export function PageHeader({ title, subtitle, action, back }: {
+  title: string
+  subtitle?: string
+  action?: ReactNode
+  back?: string
+}) {
   return (
     <header className="flex min-h-11 items-center justify-between gap-3">
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-xl leading-tight font-bold tracking-[-0.02em]">{title}</h1>
+      {back && <div className="-mr-2 -ml-3"><BackButton back={back} /></div>}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h1 className="truncate text-xl leading-tight font-bold tracking-[-0.02em]">{title}</h1>
         {subtitle && <p className="text-[13px] text-muted">{subtitle}</p>}
       </div>
       {action}
@@ -235,6 +241,21 @@ export function MacroStats({ macros }: { macros: Macros }) {
 export function ErrorMessage({ message }: { message: string | null }) {
   if (!message) return null
   return <p role="alert" className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm text-danger">{message}</p>
+}
+
+/** Shown on log screens opened from a past day ("Add a meal to this day"). */
+export function PastDayNote({ date }: { date: string }) {
+  return <p className="mt-1 text-[13px] font-semibold text-accent">Adding to {shortDate(date)}</p>
+}
+
+/** Shown while a page's data is on its way (the first open after idle can take a few seconds). */
+export function Loading() {
+  return (
+    <div role="status" className="flex items-center justify-center gap-2.5 py-16 text-sm text-muted">
+      <span className="size-4 animate-spin rounded-full border-2 border-line border-t-accent" />
+      Loading…
+    </div>
+  )
 }
 
 /** Placeholder for empty lists and not-yet-loaded content. */

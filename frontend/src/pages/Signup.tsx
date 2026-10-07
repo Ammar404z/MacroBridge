@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
 import { ErrorMessage, Field, PrimaryButton, SectionTitle } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
@@ -7,7 +7,7 @@ import { useAuth } from '../hooks/useAuth'
 // Not in the mockups: same layout as Login, plus the daily targets (editable later on Profile).
 export default function Signup() {
   const { register } = useAuth()
-  const navigate = useNavigate()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [targets, setTargets] = useState({ calories: '2000', protein: '150', carbs: '200', fat: '65' })
@@ -20,6 +20,7 @@ export default function Signup() {
     setBusy(true)
     try {
       await register({
+        displayName: name.trim() || undefined,
         email,
         password,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -28,7 +29,6 @@ export default function Signup() {
         targetCarbs: Number(targets.carbs),
         targetFat: Number(targets.fat),
       })
-      navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
@@ -51,6 +51,8 @@ export default function Signup() {
       </>}
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
+        <Field label="Name" autoComplete="given-name" maxLength={100} placeholder="What friends see"
+          className="h-13" value={name} onChange={(e) => setName(e.target.value)} />
         <Field label="Email" type="email" autoComplete="email" required placeholder="you@example.com"
           className="h-13" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field label="Password" type="password" autoComplete="new-password" required minLength={8} maxLength={72}

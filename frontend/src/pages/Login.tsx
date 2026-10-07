@@ -1,12 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
 import { ErrorMessage, Field, PrimaryButton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Login() {
   const { login } = useAuth()
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +17,6 @@ export default function Login() {
     setBusy(true)
     try {
       await login(email, password)
-      navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

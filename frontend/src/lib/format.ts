@@ -34,3 +34,39 @@ export const scale = (m: Macros, factor: number): Macros => ({
 /** First letters of the first two words: "Jonas Klein" → "JK". */
 export const initials = (name: string) =>
   name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?'
+
+/** "Jonas Klein" → "Jonas K."; single names stay as they are. */
+export function shortName(name: string) {
+  const [first, ...rest] = name.trim().split(/\s+/)
+  return rest.length ? `${first} ${rest[rest.length - 1][0].toUpperCase()}.` : first
+}
+
+const INVITE_KEY = 'macrobridge.invite'
+
+/** An invite link opened while logged out; the invite page clears it once a logged-in user sees it. */
+export const pendingInvite = {
+  set: (code: string) => localStorage.setItem(INVITE_KEY, code),
+  get: () => localStorage.getItem(INVITE_KEY),
+  clear: () => localStorage.removeItem(INVITE_KEY),
+}
+
+/** The device's local date as YYYY-MM-DD. */
+export const localToday = () => new Date().toLocaleDateString('en-CA')
+
+/** "2026-10-07" + -1 → "2026-10-06" (calendar days, no timezone drift). */
+export function addDays(date: string, days: number) {
+  const d = new Date(date + 'T12:00')
+  d.setDate(d.getDate() + days)
+  return d.toLocaleDateString('en-CA')
+}
+
+/** "Wednesday, Oct 7" */
+export const longDate = (date: string) =>
+  new Date(date + 'T12:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+
+/** "Tue, Oct 6" */
+export const shortDate = (date: string) =>
+  new Date(date + 'T12:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+/** "?date=2026-10-06" for a past day, "" for today, so links carry the day being viewed. */
+export const dateQuery = (date: string | null) => (date ? `?date=${date}` : '')

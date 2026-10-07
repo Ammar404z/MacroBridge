@@ -43,8 +43,8 @@ public class MealController {
 
     /** Estimates macros only; nothing is saved until the user confirms via /log. */
     @PostMapping("/analyze")
-    ApiResponse<Analysis> analyze(@Valid @RequestBody AnalyzeRequest req) {
-        return ApiResponse.ok(mealService.analyze(req));
+    ApiResponse<Analysis> analyze(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AnalyzeRequest req) {
+        return ApiResponse.ok(mealService.analyze(userId(jwt), req));
     }
 
     @PostMapping("/log")
@@ -70,6 +70,11 @@ public class MealController {
                                          @RequestParam(defaultValue = "30") int days) {
         if (days < 1 || days > 365) throw new ApiException(HttpStatus.BAD_REQUEST, "days must be between 1 and 365");
         return ApiResponse.ok(mealService.history(userId(jwt), days));
+    }
+
+    @GetMapping("/{id}")
+    ApiResponse<MealDto> find(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return ApiResponse.ok(mealService.find(userId(jwt), id));
     }
 
     @PutMapping("/{id}")

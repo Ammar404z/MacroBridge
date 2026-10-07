@@ -31,6 +31,13 @@ public class UserRepository {
                 .optional();
     }
 
+    public void updatePassword(UUID id, String passwordHash) {
+        jdbc.sql("update users set password_hash = :hash where id = :id")
+                .param("hash", passwordHash)
+                .param("id", id)
+                .update();
+    }
+
     /** Throws DuplicateKeyException if the email is taken. */
     public UUID insert(String email, String passwordHash) {
         return jdbc.sql("insert into users (email, password_hash) values (:email, :hash) returning id")

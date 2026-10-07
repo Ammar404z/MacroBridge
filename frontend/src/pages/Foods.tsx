@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api, type Food } from '../api/client'
 import { PlusIcon, SearchIcon } from '../components/icons'
-import { Empty, ErrorMessage, PageHeader, Pill, TabScreen } from '../components/ui'
-import { num, pcf } from '../lib/format'
+import { Empty, ErrorMessage, Loading, PageHeader, PastDayNote, Pill, TabScreen } from '../components/ui'
+import { dateQuery, num, pcf } from '../lib/format'
 
 export default function Foods() {
   const [foods, setFoods] = useState<Food[] | null>(null)
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // Carried through from "Add a meal to this day" so the Log pill logs to that day
+  const date = useSearchParams()[0].get('date')
 
   useEffect(() => {
     api.foods().then(setFoods).catch((e) => setError(e.message))
@@ -24,6 +26,7 @@ export default function Foods() {
         <Pill to="/foods/new" variant="outline"><PlusIcon size={18} /><span>Add</span></Pill>
       } />
 
+      {date && <PastDayNote date={date} />}
       <label className="relative mt-3 flex items-center">
         <SearchIcon className="pointer-events-none absolute left-3.5 text-muted" />
         <input type="search" aria-label="Search my foods" placeholder="Search my foods" value={query}
@@ -33,6 +36,7 @@ export default function Foods() {
 
       <section className="mt-3.5 flex flex-col gap-2">
         <ErrorMessage message={error} />
+        {!foods && !error && <Loading />}
         {foods && foods.length === 0 && (
           <Empty>Save the meals you eat often, then log them again in two taps.</Empty>
         )}
@@ -43,7 +47,7 @@ export default function Foods() {
               <span className="truncate text-sm font-semibold">{f.name}</span>
               <span className="truncate text-xs text-muted">{f.servingLabel} · {num(f.calories)} kcal · {pcf(f)}</span>
             </Link>
-            <Pill to={`/foods/${f.id}/log`}>Log</Pill>
+            <Pill to={`/foods/${f.id}/log${dateQuery(date)}`}>Log</Pill>
           </div>
         ))}
       </section>
