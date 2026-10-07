@@ -21,3 +21,6 @@ frontend/dist/
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/
+
+# graphify knowledge graph (local, rebuilt by graphify)
+graphify-out/
