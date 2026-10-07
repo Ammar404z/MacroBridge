@@ -1,50 +1,34 @@
 import type { ReactNode } from 'react'
 
-export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+function LogoMark() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-emerald-600 text-xl font-bold text-white">
-            M
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="mt-1 text-sm text-stone-500">{subtitle}</p>
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="MacroBridge">
+      <rect width="64" height="64" rx="18" fill="var(--color-surface)" />
+      <circle cx="32" cy="32" r="17" stroke="var(--color-line)" strokeWidth="7" />
+      <circle cx="32" cy="32" r="17" stroke="var(--color-accent)" strokeWidth="7" strokeLinecap="round"
+        strokeDasharray="74.77 106.81" transform="rotate(-90 32 32)" />
+    </svg>
+  )
+}
+
+/** Login and signup: logo, title, form, and a switch link pinned to the bottom. */
+export function AuthLayout({ title, subtitle, footer, children }: {
+  title: string
+  subtitle: ReactNode
+  footer: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-6 pb-[max(24px,env(safe-area-inset-bottom))]">
+      <section className="mt-[max(48px,12vh)] flex flex-col items-start gap-5">
+        <LogoMark />
+        <div className="flex flex-col gap-2">
+          <h1 className="text-[32px] leading-[1.1] font-bold tracking-[-0.03em]">{title}</h1>
+          <p className="text-[15px] leading-normal text-muted">{subtitle}</p>
         </div>
-        <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">{children}</div>
-      </div>
+      </section>
+      <div className="mt-10">{children}</div>
+      <div className="mt-auto flex h-11 items-center justify-center gap-1.5 pt-8 text-sm text-muted">{footer}</div>
     </div>
-  )
-}
-
-export function Field({
-  label,
-  ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium text-stone-700">{label}</span>
-      <input
-        {...props}
-        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-      />
-    </label>
-  )
-}
-
-export function ErrorMessage({ message }: { message: string | null }) {
-  if (!message) return null
-  return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
-}
-
-export function SubmitButton({ busy, children }: { busy: boolean; children: ReactNode }) {
-  return (
-    <button
-      type="submit"
-      disabled={busy}
-      className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-    >
-      {busy ? 'Please wait…' : children}
-    </button>
   )
 }

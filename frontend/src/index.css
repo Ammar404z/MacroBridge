@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/* Design tokens from design/DESIGN.md ("Instrument" dark theme) */
+@theme {
+  --font-sans: "Manrope", "Avenir Next", system-ui, sans-serif;
+  --color-bg: #0F1214;        /* page ground */
+  --color-surface: #171C1F;   /* cards, inputs, rows */
+  --color-surface-2: #22282C; /* pills, ring track, avatars */
+  --color-line: #2A3136;      /* borders, bar tracks */
+  --color-ink: #F2F5F3;       /* primary text */
+  --color-ink-2: #C9D0D4;     /* field labels, secondary actions */
+  --color-muted: #A3ACB3;     /* captions, inactive tabs */
+  --color-accent: #C8F25C;    /* ring, primary button, active tab */
+  --color-on-accent: #10140A; /* text on accent */
+  --color-bar: #DCE2DF;       /* macro bar fill */
+  --color-danger: #FF8A7A;    /* destructive text */
+}
+
+html {
+  color-scheme: dark;
+}
+
 body {
-  @apply bg-stone-50 text-stone-900 antialiased;
+  @apply bg-bg text-ink antialiased;
+  /* Every number in the app lines up */
+  font-variant-numeric: tabular-nums;
 }

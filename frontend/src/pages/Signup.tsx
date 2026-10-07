@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { AuthLayout, ErrorMessage, Field, SubmitButton } from '../components/AuthLayout'
+import { AuthLayout } from '../components/AuthLayout'
+import { ErrorMessage, Field, PrimaryButton, SectionTitle } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 
+// Not in the mockups: same layout as Login, plus the daily targets (editable later on Profile).
 export default function Signup() {
   const { register } = useAuth()
   const navigate = useNavigate()
@@ -35,31 +37,37 @@ export default function Signup() {
   }
 
   const target = (key: keyof typeof targets, label: string) => (
-    <Field label={label} type="number" min={0} step={key === 'calories' ? 1 : 0.1} required inputMode="decimal"
+    <Field label={label} numeric required step={key === 'calories' ? 1 : 0.1}
       value={targets[key]} onChange={(e) => setTargets({ ...targets, [key]: e.target.value })} />
   )
 
   return (
-    <AuthLayout title="Create your account" subtitle="Set your daily targets — you can change them later">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <Field label="Email" type="email" autoComplete="email" required value={email}
-          onChange={(e) => setEmail(e.target.value)} />
+    <AuthLayout
+      title="Create account"
+      subtitle="Set your daily targets. You can change them later."
+      footer={<>
+        <span>Have an account?</span>
+        <Link to="/login" className="flex h-11 items-center px-1 font-bold text-accent">Log in</Link>
+      </>}
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
+        <Field label="Email" type="email" autoComplete="email" required placeholder="you@example.com"
+          className="h-13" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field label="Password" type="password" autoComplete="new-password" required minLength={8} maxLength={72}
-          placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <fieldset className="grid grid-cols-2 gap-3 border-t border-stone-100 pt-4">
-          <legend className="mb-2 text-sm font-medium text-stone-500">Daily targets</legend>
-          {target('calories', 'Calories (kcal)')}
-          {target('protein', 'Protein (g)')}
-          {target('carbs', 'Carbs (g)')}
-          {target('fat', 'Fat (g)')}
-        </fieldset>
+          placeholder="At least 8 characters" className="h-13" value={password}
+          onChange={(e) => setPassword(e.target.value)} />
+        <div className="mt-2 flex flex-col gap-2.5">
+          <SectionTitle>Daily targets</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            {target('calories', 'Calories (kcal)')}
+            {target('protein', 'Protein (g)')}
+            {target('carbs', 'Carbs (g)')}
+            {target('fat', 'Fat (g)')}
+          </div>
+        </div>
         <ErrorMessage message={error} />
-        <SubmitButton busy={busy}>Create account</SubmitButton>
+        <div className="mt-2.5"><PrimaryButton busy={busy}>Create account</PrimaryButton></div>
       </form>
-      <p className="mt-6 text-center text-sm text-stone-500">
-        Already have an account?{' '}
-        <Link to="/login" className="font-medium text-emerald-700 hover:underline">Log in</Link>
-      </p>
     </AuthLayout>
   )
 }
