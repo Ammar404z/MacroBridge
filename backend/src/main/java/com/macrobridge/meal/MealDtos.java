@@ -36,7 +36,8 @@ public final class MealDtos {
             @DecimalMin("0") double carbs,
             @DecimalMin("0") double fat) {}
 
-    public record Analysis(List<MealItem> items, Macros totals, String confidence, String notes) {}
+    /** title is a short name for the meal, handy as the default description when logging. */
+    public record Analysis(List<MealItem> items, Macros totals, String title, String confidence, String notes) {}
 
     public record LogRequest(
             @NotBlank @Size(max = 500) String description,
@@ -60,5 +61,20 @@ public final class MealDtos {
 
     public record SuggestResponse(Macros remaining, List<Suggestion> suggestions) {}
 
-    public record TodayResponse(LocalDate date, List<MealDto> logs, Macros totals, Macros targets) {}
+    /** Replaces the editable fields of a logged meal; logDate is optional and moves it to another day. */
+    public record EditMealRequest(
+            @NotBlank @Size(max = 500) String description,
+            @Min(0) @Max(20000) int calories,
+            @DecimalMin("0") @DecimalMax("9999") double protein,
+            @DecimalMin("0") @DecimalMax("9999") double carbs,
+            @DecimalMin("0") @DecimalMax("9999") double fat,
+            @Pattern(regexp = "breakfast|lunch|dinner|snack") String mealLabel,
+            LocalDate logDate) {}
+
+    public record DayResponse(LocalDate date, List<MealDto> logs, Macros totals, Macros targets) {}
+
+    public record DaySummary(LocalDate date, int meals, Macros totals) {}
+
+    /** Only days with at least one meal are listed, newest first. targets are the current ones. */
+    public record HistoryResponse(LocalDate from, LocalDate to, Macros targets, List<DaySummary> days) {}
 }

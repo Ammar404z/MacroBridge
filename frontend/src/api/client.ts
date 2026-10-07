@@ -63,7 +63,7 @@ export type Confidence = 'low' | 'medium' | 'high'
 export type MealItem = Macros & { name: string; portion: string }
 
 export type AnalyzeInput = { description?: string; imageBase64?: string; mimeType?: string }
-export type Analysis = { items: MealItem[]; totals: Macros; confidence: Confidence; notes: string }
+export type Analysis = { items: MealItem[]; totals: Macros; title: string; confidence: Confidence; notes: string }
 
 export type LogInput = Macros & {
   description: string
@@ -87,6 +87,11 @@ export type Meal = Macros & {
 }
 
 export type Today = { date: string; logs: Meal[]; totals: Macros; targets: Macros }
+
+/** logDate (YYYY-MM-DD) is optional and moves the meal to another day. */
+export type EditMealInput = Macros & { description: string; mealLabel?: MealLabel; logDate?: string }
+export type DaySummary = { date: string; meals: number; totals: Macros }
+export type History = { from: string; to: string; targets: Macros; days: DaySummary[] }
 
 export type Profile = {
   displayName: string | null
@@ -112,6 +117,9 @@ export const api = {
   analyzeMeal: (input: AnalyzeInput) => request<Analysis>('POST', '/meals/analyze', input),
   logMeal: (input: LogInput) => request<Meal>('POST', '/meals/log', input),
   today: () => request<Today>('GET', '/meals/today'),
+  day: (date: string) => request<Today>('GET', `/meals/day/${date}`),
+  history: (days = 30) => request<History>('GET', `/meals/history?days=${days}`),
+  editMeal: (id: string, input: EditMealInput) => request<Meal>('PUT', `/meals/${id}`, input),
   deleteMeal: (id: string) => request<null>('DELETE', `/meals/${id}`),
   suggestMeals: (ask?: string) => request<Suggestions>('POST', '/meals/suggest', { request: ask }),
 

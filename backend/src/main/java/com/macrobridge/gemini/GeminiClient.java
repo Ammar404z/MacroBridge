@@ -28,9 +28,14 @@ public class GeminiClient {
     private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
 
     private static final String PROMPT = """
-            You are a nutrition estimator. The user describes or photographs a meal.
+            You are a nutrition estimator. You get a text description of a meal, a photo of it, or both.
+            With both, they describe the same meal together: include every food visible in the photo AND every food
+            mentioned in the text. The text may add things the photo doesn't show (a drink, a sauce, cooking oil,
+            a second helping, something already eaten) and may clarify what is visible (what a food is, its portion,
+            how it was cooked). When text and photo disagree, trust the text. Never count the same food twice.
             List each food item with its estimated portion and macros (calories in kcal; protein, carbs, fat in grams).
             Assume typical portions when none are given. If there is no food, return an empty items list.
+            title: a short name for the whole meal, e.g. "Eggs, toast and coffee".
             confidence: "high" if items and portions are clear, "medium" if portions are guessed, "low" if the food itself is unclear.
             notes: one short sentence on the main assumptions.
             """;
@@ -54,19 +59,23 @@ public class GeminiClient {
                     "required": ["name", "portion", "calories", "protein", "carbs", "fat"]
                   }
                 },
+                "title": {"type": "string"},
                 "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
                 "notes": {"type": "string"}
               },
-              "required": ["items", "confidence", "notes"]
+              "required": ["items", "title", "confidence", "notes"]
             }
             """;
 
     private static final String SUGGEST_PROMPT = """
-            You are a practical meal planner. Suggest 3 meal ideas that fit the user's remaining macros for today.
-            Each idea should land close to (and not far over) the remaining calories, and prioritize hitting the protein left.
-            Prefer simple meals, and reuse the user's saved foods when they fit; name them exactly when you do.
-            Respect the user's request if there is one. If almost nothing is left, suggest small, light options.
-            description: one sentence with the portions, e.g. "200 g chicken breast, 150 g rice, side salad".
+            You are a practical meal planner. Suggest 3 different ideas for the user's NEXT meal or snack.
+            Each idea is one normal sitting, not the rest of the day: size it to roughly a third to a half of the
+            calories left (a light snack if little is left), never more than what is left, and lean on protein
+            when protein left is high relative to calories.
+            Prefer simple, realistic meals. You may reuse the user's saved foods when they fit, by their exact name.
+            Respect the user's request if there is one.
+            name: a short, plain dish name, e.g. "Turkey and rice skillet". No marketing words.
+            description: one short sentence with the main portions, e.g. "250 g skyr, a banana, 40 g oats and honey."
             Macros are your estimate for the whole idea (calories in kcal; protein, carbs, fat in grams).
             """;
 
@@ -94,7 +103,7 @@ public class GeminiClient {
             }
             """;
 
-    public record Result(List<MealItem> items, String confidence, String notes) {}
+    public record Result(List<MealItem> items, String title, String confidence, String notes) {}
 
     public record Suggestion(String name, String description, int calories, double protein, double carbs, double fat) {}
 
@@ -132,11 +141,12 @@ public class GeminiClient {
     public Result analyze(String description, String imageBase64, String mimeType) {
         List<Map<String, Object>> parts = new ArrayList<>();
         parts.add(Map.of("text", PROMPT));
-        if (description != null && !description.isBlank()) {
-            parts.add(Map.of("text", "Meal: " + description));
-        }
+        boolean hasText = description != null && !description.isBlank();
         if (imageBase64 != null) {
             parts.add(Map.of("inline_data", Map.of("mime_type", mimeType, "data", imageBase64)));
+            if (hasText) parts.add(Map.of("text", "The user's note about this photo: " + description));
+        } else if (hasText) {
+            parts.add(Map.of("text", "Meal: " + description));
         }
         Result result = generate(parts, analyzeSchema, Result.class, 0.2);
         if (result == null) {

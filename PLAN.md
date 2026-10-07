@@ -106,9 +106,13 @@ GET  /api/me              → { id, email }   (requires token)
 
 ### Meals
 ```
-POST /api/meals/analyze   { description?, imageBase64?, mimeType? } → { items, totals, confidence, notes }
+POST /api/meals/analyze   { description?, imageBase64?, mimeType? } → { items, totals, title, confidence, notes }
+                          (photo + text combine: text adds items the photo doesn't show and clarifies what it does)
 POST /api/meals/log       { description, calories, protein, carbs, fat, mealLabel, confidence, aiNotes }
 GET  /api/meals/today     → { date, logs[], totals, targets }
+GET  /api/meals/day/{date} → same shape, for any day (YYYY-MM-DD)
+GET  /api/meals/history?days=30 → { from, to, targets, days[{ date, meals, totals }] }  (days with meals only)
+PUT  /api/meals/{id}      { description, calories, protein, carbs, fat, mealLabel?, logDate? }  (logDate can't be in the future)
 DELETE /api/meals/{id}
 ```
 

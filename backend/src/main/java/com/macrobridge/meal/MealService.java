@@ -19,7 +19,10 @@ import com.macrobridge.meal.MealDtos.LogRequest;
 import com.macrobridge.meal.MealDtos.Macros;
 import com.macrobridge.meal.MealDtos.MealDto;
 import com.macrobridge.meal.MealDtos.SuggestResponse;
-import com.macrobridge.meal.MealDtos.TodayResponse;
+import com.macrobridge.meal.MealDtos.DayResponse;
+import com.macrobridge.meal.MealDtos.DaySummary;
+import com.macrobridge.meal.MealDtos.EditMealRequest;
+import com.macrobridge.meal.MealDtos.HistoryResponse;
 import com.macrobridge.profile.ProfileRepository;
 import com.macrobridge.profile.ProfileRepository.ProfileRow;
 
@@ -59,7 +62,7 @@ public class MealService {
         // Sum ourselves rather than trusting the model's arithmetic
         var totals = sum(result.items().stream()
                 .map(i -> new Macros(i.calories(), i.protein(), i.carbs(), i.fat())).toList());
-        return new Analysis(result.items(), totals, result.confidence(), result.notes());
+        return new Analysis(result.items(), totals, result.title(), result.confidence(), result.notes());
     }
 
     public MealDto log(UUID userId, LogRequest req) {
@@ -78,17 +81,24 @@ public class MealService {
         return meals.insert(userId, today(profile(userId)), req, null, food.id(), servings);
     }
 
-    public TodayResponse today(UUID userId) {
+    public DayResponse today(UUID userId) {
         ProfileRow p = profile(userId);
-        LocalDate date = today(p);
+        return day(userId, p, today(p));
+    }
+
+    public DayResponse day(UUID userId, LocalDate date) {
+        return day(userId, profile(userId), date);
+    }
+
+    private DayResponse day(UUID userId, ProfileRow p, LocalDate date) {
         List<MealDto> logs = meals.findByDate(userId, date);
         var totals = sum(logs.stream().map(m -> new Macros(m.calories(), m.protein(), m.carbs(), m.fat())).toList());
         var targets = new Macros(p.targetCalories(), p.targetProtein(), p.targetCarbs(), p.targetFat());
-        return new TodayResponse(date, logs, totals, targets);
+        return new DayResponse(date, logs, totals, targets);
     }
 
     public SuggestResponse suggest(UUID userId, String request) {
-        TodayResponse today = today(userId);
+        DayResponse today = today(userId);
         Macros t = today.targets(), e = today.totals();
         var remaining = new Macros(Math.max(0, t.calories() - e.calories()),
                 round1(Math.max(0, t.protein() - e.protein())),
@@ -100,6 +110,27 @@ public class MealService {
                         f.name(), f.servingLabel(), f.calories(), f.protein(), f.carbs(), f.fat()))
                 .toList();
         return new SuggestResponse(remaining, gemini.suggest(remaining, eaten, myFoods, request));
+    }
+
+    /** The last `days` days up to and including the user's today. */
+    public HistoryResponse history(UUID userId, int days) {
+        ProfileRow p = profile(userId);
+        LocalDate to = today(p);
+        LocalDate from = to.minusDays(days - 1);
+        var targets = new Macros(p.targetCalories(), p.targetProtein(), p.targetCarbs(), p.targetFat());
+        var summaries = meals.summarize(userId, from, to).stream()
+                .map(s -> new DaySummary(s.date(), s.meals(), new Macros(s.totals().calories(),
+                        round1(s.totals().protein()), round1(s.totals().carbs()), round1(s.totals().fat()))))
+                .toList();
+        return new HistoryResponse(from, to, targets, summaries);
+    }
+
+    public MealDto edit(UUID userId, UUID mealId, EditMealRequest req) {
+        if (req.logDate() != null && req.logDate().isAfter(today(profile(userId)))) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "logDate can't be in the future");
+        }
+        return meals.update(userId, mealId, req)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Meal not found"));
     }
 
     public void delete(UUID userId, UUID mealId) {
