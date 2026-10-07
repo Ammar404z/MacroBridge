@@ -5,6 +5,7 @@ import { Avatar } from '../components/Avatar'
 import { ErrorMessage, FlowScreen, PrimaryButton, TextButton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { pendingInvite } from '../lib/format'
+import { t } from '../lib/i18n'
 
 /** /invite/:code, the link a friend shares. Logged-out visitors log in or sign up first, then come back here. */
 export default function Invite() {
@@ -29,12 +30,12 @@ export default function Invite() {
       navigate(path)
     }
     return (
-      <FlowScreen title="Friend invite" back="/login" actions={<>
-        <PrimaryButton type="button" onClick={() => go('/signup')}>Create an account</PrimaryButton>
-        <TextButton onClick={() => go('/login')}>I already have an account</TextButton>
+      <FlowScreen title={t('Friend invite')} back="/login" actions={<>
+        <PrimaryButton type="button" onClick={() => go('/signup')}>{t('Create an account')}</PrimaryButton>
+        <TextButton onClick={() => go('/login')}>{t('I already have an account')}</TextButton>
       </>}>
         <p className="mt-6 text-[15px] leading-normal text-ink-2">
-          A friend invited you to MacroBridge. Log in or create an account to add them.
+          {t('A friend invited you to MacroBridge. Log in or create an account to add them.')}
         </p>
       </FlowScreen>
     )
@@ -55,21 +56,21 @@ export default function Invite() {
 
   const p = invite?.person
   const text = {
-    none: `${p?.name} invited you to be friends. You'll see each other's day once they accept.`,
-    incoming: `${p?.name} already sent you a request. Accept it to become friends.`,
-    requested: `Request sent. You'll be friends as soon as ${p?.name} accepts.`,
-    friends: `You and ${p?.name} are friends.`,
-    self: 'This is your own invite link. Send it to a friend from the Friends tab.',
+    none: t("{name} invited you to be friends. You'll see each other's day once they accept.", { name: p?.name ?? '' }),
+    incoming: t('{name} already sent you a request. Accept it to become friends.', { name: p?.name ?? '' }),
+    requested: t("Request sent. You'll be friends as soon as {name} accepts.", { name: p?.name ?? '' }),
+    friends: t('You and {name} are friends.', { name: p?.name ?? '' }),
+    self: t('This is your own invite link. Send it to a friend from the Friends tab.'),
   }
 
   return (
-    <FlowScreen title="Friend invite" back="/friends" actions={invite && (
+    <FlowScreen title={t('Friend invite')} back="/friends" actions={invite && (
       invite.relation === 'none' || invite.relation === 'incoming'
         ? <PrimaryButton type="button" onClick={send} busy={busy}>
-            {invite.relation === 'incoming' ? 'Accept request' : 'Send friend request'}
+            {t(invite.relation === 'incoming' ? 'Accept request' : 'Send friend request')}
           </PrimaryButton>
         : <PrimaryButton to={invite.relation === 'friends' ? `/friends/${p!.id}` : '/friends'}>
-            {invite.relation === 'friends' ? `See ${p!.name.split(' ')[0]}'s day` : 'Go to Friends'}
+            {invite.relation === 'friends' ? t("See {name}'s day", { name: p!.name.split(' ')[0] }) : t('Go to Friends')}
           </PrimaryButton>
     )}>
       <ErrorMessage message={error} />

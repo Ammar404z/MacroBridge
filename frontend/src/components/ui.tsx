@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTML
 import { Link, useNavigate } from 'react-router'
 import type { Macros, MealLabel } from '../api/client'
 import { capitalize, MEAL_LABELS, num, shortDate } from '../lib/format'
+import { t } from '../lib/i18n'
 import { BackIcon } from './icons'
 import { TabBar } from './TabBar'
 
@@ -44,7 +45,7 @@ export function FlowScreen({ title, back, actions, children }: {
 function BackButton({ back }: { back: string | (() => void) }) {
   const navigate = useNavigate()
   return (
-    <button type="button" aria-label="Back" onClick={() => (typeof back === 'string' ? navigate(back) : back())}
+    <button type="button" aria-label={t('Back')} onClick={() => (typeof back === 'string' ? navigate(back) : back())}
       className="grid size-11 place-items-center rounded-full text-ink hover:bg-surface">
       <BackIcon />
     </button>
@@ -88,7 +89,7 @@ export function PrimaryButton({ to, busy, busyLabel, children, ...props }:
   if (to) return <Link to={to} className={primary}>{children}</Link>
   return (
     <button type="submit" disabled={busy || props.disabled} {...props} className={primary}>
-      {busy ? busyLabel ?? 'Please wait…' : children}
+      {busy ? busyLabel ?? t('Please wait…') : children}
     </button>
   )
 }
@@ -153,7 +154,7 @@ export const selectCls = `${inputCls} h-12 font-medium`
 export function MealSegment({ value, onChange }: { value: MealLabel; onChange: (v: MealLabel) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-[13px] font-semibold text-ink-2">Meal</div>
+      <div className="text-[13px] font-semibold text-ink-2">{t('Meal')}</div>
       <div className="grid grid-cols-4 gap-1.5">
         {MEAL_LABELS.map((l) => {
           const on = l === value
@@ -162,7 +163,7 @@ export function MealSegment({ value, onChange }: { value: MealLabel; onChange: (
               className={`h-11 rounded-xl border text-[13px] ${on
                 ? 'border-accent bg-accent font-bold text-on-accent'
                 : 'border-line bg-surface font-semibold text-ink-2 hover:text-ink'}`}>
-              {capitalize(l)}
+              {t(capitalize(l))}
             </button>
           )
         })}
@@ -211,9 +212,9 @@ export function MacroTile({ label, value, target }: { label: string; value: numb
 export function MacroTiles({ totals, targets }: { totals: Macros; targets: Macros }) {
   return (
     <section className="grid grid-cols-3 gap-2">
-      <MacroTile label="Protein" value={totals.protein} target={targets.protein} />
-      <MacroTile label="Carbs" value={totals.carbs} target={targets.carbs} />
-      <MacroTile label="Fat" value={totals.fat} target={targets.fat} />
+      <MacroTile label={t('Protein')} value={totals.protein} target={targets.protein} />
+      <MacroTile label={t('Carbs')} value={totals.carbs} target={targets.carbs} />
+      <MacroTile label={t('Fat')} value={totals.fat} target={targets.fat} />
     </section>
   )
 }
@@ -222,9 +223,9 @@ export function MacroTiles({ totals, targets }: { totals: Macros; targets: Macro
 export function MacroStats({ macros }: { macros: Macros }) {
   const stats = [
     { value: num(macros.calories), unit: 'kcal', accent: true },
-    { value: `${num(macros.protein)} g`, unit: 'protein' },
-    { value: `${num(macros.carbs)} g`, unit: 'carbs' },
-    { value: `${num(macros.fat)} g`, unit: 'fat' },
+    { value: `${num(macros.protein)} g`, unit: t('protein') },
+    { value: `${num(macros.carbs)} g`, unit: t('carbs') },
+    { value: `${num(macros.fat)} g`, unit: t('fat') },
   ]
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -240,12 +241,12 @@ export function MacroStats({ macros }: { macros: Macros }) {
 
 export function ErrorMessage({ message }: { message: string | null }) {
   if (!message) return null
-  return <p role="alert" className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm text-danger">{message}</p>
+  return <p role="alert" className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm text-danger">{t(message)}</p>
 }
 
 /** Shown on log screens opened from a past day ("Add a meal to this day"). */
 export function PastDayNote({ date }: { date: string }) {
-  return <p className="mt-1 text-[13px] font-semibold text-accent">Adding to {shortDate(date)}</p>
+  return <p className="mt-1 text-[13px] font-semibold text-accent">{t('Adding to {date}', { date: shortDate(date) })}</p>
 }
 
 /** Shown while a page's data is on its way (the first open after idle can take a few seconds). */
@@ -253,7 +254,7 @@ export function Loading() {
   return (
     <div role="status" className="flex items-center justify-center gap-2.5 py-16 text-sm text-muted">
       <span className="size-4 animate-spin rounded-full border-2 border-line border-t-accent" />
-      Loading…
+      {t('Loading…')}
     </div>
   )
 }

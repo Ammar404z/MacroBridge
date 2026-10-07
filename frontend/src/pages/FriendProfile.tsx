@@ -6,6 +6,7 @@ import { CalorieRing } from '../components/CalorieRing'
 import { CheckIcon } from '../components/icons'
 import { Card, Empty, ErrorMessage, Loading, MacroTiles, PageHeader, SectionTitle, TabScreen } from '../components/ui'
 import { capitalize, num, pcf, shortName } from '../lib/format'
+import { t } from '../lib/i18n'
 
 export default function FriendProfile() {
   const { id } = useParams()
@@ -18,7 +19,7 @@ export default function FriendProfile() {
   }, [id])
 
   async function unfriend() {
-    if (!friend || !confirm(`Remove ${friend.name} as a friend? You'll stop seeing each other's meals.`)) return
+    if (!friend || !confirm(t("Remove {name} as a friend? You'll stop seeing each other's meals.", { name: friend.name }))) return
     try {
       await api.removeFriend(friend.id)
       navigate('/friends', { replace: true })
@@ -40,9 +41,9 @@ export default function FriendProfile() {
           <section className="mt-4 flex items-center gap-5">
             {day ? (
               <CalorieRing value={day.totals.calories} target={day.targets.calories} size={120} radius={52} stroke={10}
-                label={`${num(day.totals.calories)} of ${num(day.targets.calories)} kcal eaten`}>
+                label={t('{eaten} of {target} kcal eaten', { eaten: num(day.totals.calories), target: num(day.targets.calories) })}>
                 <div className="text-[28px] leading-none font-bold tracking-[-0.03em]">{num(Math.abs(left))}</div>
-                <div className="mt-0.5 text-xs text-muted">{left < 0 ? 'kcal over' : 'kcal left'}</div>
+                <div className="mt-0.5 text-xs text-muted">{t(left < 0 ? 'kcal over' : 'kcal left')}</div>
               </CalorieRing>
             ) : (
               <Avatar id={friend.id} name={friend.name} version={friend.avatarVersion} size={120} />
@@ -51,16 +52,16 @@ export default function FriendProfile() {
               <div className="flex items-center gap-2.5">
                 {day && <Avatar id={friend.id} name={friend.name} version={friend.avatarVersion} size={36} />}
                 <div className="flex flex-col gap-0.5">
-                  <div className="text-xs font-semibold text-muted">Today</div>
+                  <div className="text-xs font-semibold text-muted">{t('Today')}</div>
                   <div className="text-[15px] font-bold">
-                    {day ? `${num(day.totals.calories)} of ${num(day.targets.calories)} kcal` : 'Not sharing'}
+                    {day ? t('{eaten} of {target} kcal', { eaten: num(day.totals.calories), target: num(day.targets.calories) }) : t('Not sharing')}
                   </div>
                 </div>
               </div>
-              <button type="button" onClick={unfriend} aria-label={`Friends with ${friend.name}. Tap to remove.`}
+              <button type="button" onClick={unfriend} aria-label={t('Friends with {name}. Tap to remove.', { name: friend.name })}
                 className="flex h-11 items-center gap-1.5 rounded-full border border-line bg-surface pr-4 pl-3 text-[13px] font-bold hover:border-danger/60">
                 <CheckIcon className="text-accent" />
-                <span>Friends</span>
+                <span>{t('Friends')}</span>
               </button>
             </div>
           </section>
@@ -69,13 +70,13 @@ export default function FriendProfile() {
             <>
               <div className="mt-5"><MacroTiles totals={day.totals} targets={day.targets} /></div>
               <section className="mt-[22px] flex flex-col gap-2">
-                <SectionTitle>Today's meals</SectionTitle>
-                {day.logs.length === 0 && <Empty>Nothing logged yet today.</Empty>}
+                <SectionTitle>{t("Today's meals")}</SectionTitle>
+                {day.logs.length === 0 && <Empty>{t('Nothing logged yet today.')}</Empty>}
                 {day.logs.map((m) => (
                   <div key={m.id} className="flex h-14 items-center gap-3 rounded-[14px] bg-surface px-3.5">
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       <div className="truncate text-sm font-semibold">{m.description}</div>
-                      <div className="text-xs text-muted">{capitalize(m.mealLabel)} · {pcf(m)}</div>
+                      <div className="text-xs text-muted">{t(capitalize(m.mealLabel))} · {pcf(m)}</div>
                     </div>
                     <div className="text-[15px] font-bold">{num(m.calories)}</div>
                   </div>
@@ -83,7 +84,7 @@ export default function FriendProfile() {
               </section>
             </>
           ) : (
-            <Card className="mt-5 text-sm text-ink-2">{friend.name} has turned off meal sharing.</Card>
+            <Card className="mt-5 text-sm text-ink-2">{t('{name} has turned off meal sharing.', { name: friend.name })}</Card>
           )}
         </>
       )}

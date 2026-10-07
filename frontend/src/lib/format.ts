@@ -1,4 +1,5 @@
 import type { Macros, MealLabel } from '../api/client'
+import { locale, t } from './i18n'
 
 export const MEAL_LABELS: MealLabel[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
@@ -14,11 +15,11 @@ export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** 1290 → "1,290"; grams keep at most one decimal. */
 export const num = (n: number) => Math.round(n * 10) / 10 === Math.round(n)
-  ? Math.round(n).toLocaleString('en-US')
-  : (Math.round(n * 10) / 10).toLocaleString('en-US')
+  ? Math.round(n).toLocaleString(locale)
+  : (Math.round(n * 10) / 10).toLocaleString(locale)
 
 /** "P 22 · C 34 · F 22" */
-export const pcf = (m: Macros) => `P ${num(m.protein)} · C ${num(m.carbs)} · F ${num(m.fat)}`
+export const pcf = (m: Macros) => t('P {p} · C {c} · F {f}', { p: num(m.protein), c: num(m.carbs), f: num(m.fat) })
 
 /** Calories implied by the macros (4/4/9 kcal per gram). */
 export const kcalFromMacros = (m: Pick<Macros, 'protein' | 'carbs' | 'fat'>) =>
@@ -62,11 +63,11 @@ export function addDays(date: string, days: number) {
 
 /** "Wednesday, Oct 7" */
 export const longDate = (date: string) =>
-  new Date(date + 'T12:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  new Date(date + 'T12:00').toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' })
 
 /** "Tue, Oct 6" */
 export const shortDate = (date: string) =>
-  new Date(date + 'T12:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  new Date(date + 'T12:00').toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
 
 /** "?date=2026-10-06" for a past day, "" for today, so links carry the day being viewed. */
 export const dateQuery = (date: string | null) => (date ? `?date=${date}` : '')

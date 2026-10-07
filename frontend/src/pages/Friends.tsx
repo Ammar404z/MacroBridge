@@ -7,6 +7,7 @@ import { FRIENDS_CHANGED } from '../components/TabBar'
 import { PlusIcon } from '../components/icons'
 import { Card, Empty, ErrorMessage, Loading, PageHeader, Pill, SectionTitle, TabScreen } from '../components/ui'
 import { capitalize, labelForNow, num, pcf, shortName } from '../lib/format'
+import { locale, t } from '../lib/i18n'
 
 const share = (f: Friend) => (f.totals && f.targets && f.targets.calories > 0 ? f.totals.calories / f.targets.calories : null)
 
@@ -36,10 +37,10 @@ export default function Friends() {
     const url = `${window.location.origin}/invite/${data.inviteCode}`
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'MacroBridge', text: 'Add me as a friend on MacroBridge', url })
+        await navigator.share({ title: 'MacroBridge', text: t('Add me as a friend on MacroBridge'), url })
       } else {
         await navigator.clipboard.writeText(url)
-        setNotice('Invite link copied. Send it to a friend.')
+        setNotice(t('Invite link copied. Send it to a friend.'))
       }
     } catch {
       // Share sheet dismissed
@@ -63,8 +64,8 @@ export default function Friends() {
 
   return (
     <TabScreen>
-      <PageHeader title="Friends" action={
-        <Pill variant="outline" onClick={invite} disabled={!data}><PlusIcon size={18} /><span>Add</span></Pill>
+      <PageHeader title={t('Friends')} action={
+        <Pill variant="outline" onClick={invite} disabled={!data}><PlusIcon size={18} /><span>{t('Add')}</span></Pill>
       } />
       {notice && <p role="status" className="mt-2 text-[13px] text-accent">{notice}</p>}
       <ErrorMessage message={error} />
@@ -72,12 +73,12 @@ export default function Friends() {
 
       {data && data.incoming.length > 0 && (
         <section className="mt-4 flex flex-col gap-2">
-          <SectionTitle>Friend requests</SectionTitle>
+          <SectionTitle>{t('Friend requests')}</SectionTitle>
           {data.incoming.map((p) => (
-            <PersonRow key={p.id} person={p} caption="Wants to be friends">
+            <PersonRow key={p.id} person={p} caption={t('Wants to be friends')}>
               <button type="button" onClick={() => act(() => api.removeFriend(p.id))}
-                className="h-11 px-2 text-[13px] font-semibold text-muted hover:text-ink">Decline</button>
-              <Pill onClick={() => act(() => api.acceptFriend(p.id))}>Accept</Pill>
+                className="h-11 px-2 text-[13px] font-semibold text-muted hover:text-ink">{t('Decline')}</button>
+              <Pill onClick={() => act(() => api.acceptFriend(p.id))}>{t('Accept')}</Pill>
             </PersonRow>
           ))}
         </section>
@@ -86,15 +87,15 @@ export default function Friends() {
       {data && data.friends.length === 0 && (
         <Card className="mt-4 flex flex-col gap-3">
           <p className="text-sm leading-normal text-ink-2">
-            Send your invite link to a friend. Once you're friends you'll see each other's day: calories, macros and meals.
+            {t("Send your invite link to a friend. Once you're friends you'll see each other's day: calories, macros and meals.")}
           </p>
-          <Pill onClick={invite}>Share my invite link</Pill>
+          <Pill onClick={invite}>{t('Share my invite link')}</Pill>
         </Card>
       )}
 
       {friends.length > 0 && (
         <section className="mt-4 flex flex-col gap-2.5">
-          <div className="text-xs font-semibold text-muted">Today, share of calorie target eaten</div>
+          <div className="text-xs font-semibold text-muted">{t('Today, share of calorie target eaten')}</div>
           <div className="grid grid-cols-4 gap-2">
             {friends.map((f) => {
               const pct = share(f)
@@ -104,7 +105,7 @@ export default function Friends() {
                     <Avatar id={f.id} name={f.name} version={f.avatarVersion} size={40} />
                   </CalorieRing>
                   <span className="max-w-full truncate text-[13px] font-semibold">{f.name.split(' ')[0]}</span>
-                  <span className="text-xs text-muted">{pct == null ? 'Private' : `${Math.round(pct * 100)}%`}</span>
+                  <span className="text-xs text-muted">{pct == null ? t('Private') : `${Math.round(pct * 100)}%`}</span>
                 </Link>
               )
             })}
@@ -114,11 +115,11 @@ export default function Friends() {
 
       {data && data.outgoing.length > 0 && (
         <section className="mt-5 flex flex-col gap-2">
-          <SectionTitle>Sent requests</SectionTitle>
+          <SectionTitle>{t('Sent requests')}</SectionTitle>
           {data.outgoing.map((p) => (
-            <PersonRow key={p.id} person={p} caption="Waiting for them to accept">
+            <PersonRow key={p.id} person={p} caption={t('Waiting for them to accept')}>
               <button type="button" onClick={() => act(() => api.removeFriend(p.id))}
-                className="h-11 px-2 text-[13px] font-semibold text-muted hover:text-ink">Cancel</button>
+                className="h-11 px-2 text-[13px] font-semibold text-muted hover:text-ink">{t('Cancel')}</button>
             </PersonRow>
           ))}
         </section>
@@ -126,8 +127,8 @@ export default function Friends() {
 
       {data && data.friends.length > 0 && (
         <section className="mt-[22px] flex flex-col gap-2">
-          <SectionTitle>Latest meals</SectionTitle>
-          {data.feed.length === 0 && <Empty>No meals from friends in the last 24 hours.</Empty>}
+          <SectionTitle>{t('Latest meals')}</SectionTitle>
+          {data.feed.length === 0 && <Empty>{t('No meals from friends in the last 24 hours.')}</Empty>}
           {data.feed.map((m) => (
             <div key={m.mealId} className="flex flex-col gap-1.5 rounded-[14px] bg-surface pt-3 pr-2.5 pb-3.5 pl-3.5">
               <div className="flex items-center gap-2.5">
@@ -136,12 +137,12 @@ export default function Friends() {
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate text-sm font-bold">{shortName(m.name)}</span>
                     <span className="text-xs text-muted">
-                      {capitalize(m.mealLabel)} · {new Date(m.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {t(capitalize(m.mealLabel))} · {new Date(m.loggedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </span>
                 </Link>
                 <Pill onClick={() => logThis(m)} disabled={logged.has(m.mealId)}>
-                  {logged.has(m.mealId) ? 'Logged' : 'Log this'}
+                  {t(logged.has(m.mealId) ? 'Logged' : 'Log this')}
                 </Pill>
               </div>
               <div className="text-sm font-semibold">{m.description}</div>

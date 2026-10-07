@@ -8,6 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -183,6 +184,12 @@ public class GeminiClient {
     private <T> T generate(List<Map<String, Object>> parts, Object schema, Class<T> type, double temperature) {
         if (!configured) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI isn't set up: GEMINI_API_KEY is missing");
+        }
+        // The app sends Accept-Language; German users get German names, portions and notes
+        if ("de".equals(LocaleContextHolder.getLocale().getLanguage())) {
+            parts = new ArrayList<>(parts);
+            parts.add(Map.of("text", "Write every text value (names, portions, title, notes, descriptions) in German. "
+                    + "Keep the confidence value in English."));
         }
         var body = Map.of(
                 "contents", List.of(Map.of("role", "user", "parts", parts)),

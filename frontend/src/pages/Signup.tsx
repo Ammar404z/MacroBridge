@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
 import { ErrorMessage, Field, PrimaryButton, SectionTitle } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { t } from '../lib/i18n'
 
 // Not in the mockups: same layout as Login, plus the daily targets (editable later on Profile).
 export default function Signup() {
@@ -30,7 +31,7 @@ export default function Signup() {
         targetFat: Number(targets.fat),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed')
+      setError(err instanceof Error ? err.message : t('Sign up failed'))
     } finally {
       setBusy(false)
     }
@@ -43,32 +44,32 @@ export default function Signup() {
 
   return (
     <AuthLayout
-      title="Create account"
-      subtitle="Set your daily targets. You can change them later."
+      title={t('Create account')}
+      subtitle={t('Set your daily targets. You can change them later.')}
       footer={<>
-        <span>Have an account?</span>
-        <Link to="/login" className="flex h-11 items-center px-1 font-bold text-accent">Log in</Link>
+        <span>{t('Have an account?')}</span>
+        <Link to="/login" className="flex h-11 items-center px-1 font-bold text-accent">{t('Log in')}</Link>
       </>}
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
-        <Field label="Name" autoComplete="given-name" maxLength={100} placeholder="What friends see"
+        <Field label={t('Name')} autoComplete="given-name" maxLength={100} placeholder={t('What friends see')}
           className="h-13" value={name} onChange={(e) => setName(e.target.value)} />
-        <Field label="Email" type="email" autoComplete="email" required placeholder="you@example.com"
+        <Field label={t('Email')} type="email" autoComplete="email" required placeholder="you@example.com"
           className="h-13" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Password" type="password" autoComplete="new-password" required minLength={8} maxLength={72}
-          placeholder="At least 8 characters" className="h-13" value={password}
+        <Field label={t('Password')} type="password" autoComplete="new-password" required minLength={8} maxLength={72}
+          placeholder={t('At least 8 characters')} className="h-13" value={password}
           onChange={(e) => setPassword(e.target.value)} />
         <div className="mt-2 flex flex-col gap-2.5">
-          <SectionTitle>Daily targets</SectionTitle>
+          <SectionTitle>{t('Daily targets')}</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
-            {target('calories', 'Calories (kcal)')}
-            {target('protein', 'Protein (g)')}
-            {target('carbs', 'Carbs (g)')}
-            {target('fat', 'Fat (g)')}
+            {target('calories', t('Calories (kcal)'))}
+            {target('protein', t('Protein (g)'))}
+            {target('carbs', t('Carbs (g)'))}
+            {target('fat', t('Fat (g)'))}
           </div>
         </div>
         <ErrorMessage message={error} />
-        <div className="mt-2.5"><PrimaryButton busy={busy}>Create account</PrimaryButton></div>
+        <div className="mt-2.5"><PrimaryButton busy={busy}>{t('Create account')}</PrimaryButton></div>
       </form>
     </AuthLayout>
   )

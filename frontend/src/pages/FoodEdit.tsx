@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { api, type FoodInput } from '../api/client'
 import { ErrorMessage, Field, FlowScreen, Loading, PrimaryButton, SectionTitle, TextButton } from '../components/ui'
+import { t } from '../lib/i18n'
 
 const EMPTY: FoodInput = { name: '', servingLabel: '', calories: 0, protein: 0, carbs: 0, fat: 0 }
 
@@ -41,7 +42,7 @@ export default function FoodEdit() {
   }
 
   async function remove() {
-    if (!id || !form || !confirm(`Delete "${form.name}"? Meals you already logged keep their macros.`)) return
+    if (!id || !form || !confirm(t('Delete "{name}"? Meals you already logged keep their macros.', { name: form.name }))) return
     setBusy(true)
     try {
       await api.deleteFood(id)
@@ -60,32 +61,32 @@ export default function FoodEdit() {
   return (
     <form onSubmit={save} className="contents">
       <FlowScreen
-        title={isNew ? 'New food' : 'Edit food'}
+        title={t(isNew ? 'New food' : 'Edit food')}
         back="/foods"
         actions={form && <>
-          <PrimaryButton busy={busy}>Save food</PrimaryButton>
-          {!isNew && <TextButton danger onClick={remove} disabled={busy}>Delete food</TextButton>}
+          <PrimaryButton busy={busy}>{t('Save food')}</PrimaryButton>
+          {!isNew && <TextButton danger onClick={remove} disabled={busy}>{t('Delete food')}</TextButton>}
         </>}
       >
         {!form && !error && <Loading />}
         {form && (
           <>
             <section className="mt-4 flex flex-col gap-4">
-              <Field label="Name" required maxLength={100} value={form.name}
+              <Field label={t('Name')} required maxLength={100} value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <Field label="Serving (optional)" maxLength={50} placeholder="e.g. 1 bowl, 100 g" value={form.servingLabel ?? ''}
+              <Field label={t('Serving (optional)')} maxLength={50} placeholder={t('e.g. 1 bowl, 100 g')} value={form.servingLabel ?? ''}
                 onChange={(e) => setForm({ ...form, servingLabel: e.target.value })} />
             </section>
             <section className="mt-6 flex flex-col gap-3">
               <div className="flex flex-col gap-0.5">
-                <SectionTitle>Macros per serving</SectionTitle>
-                <p className="text-xs text-muted">Logging 2 servings doubles these.</p>
+                <SectionTitle>{t('Macros per serving')}</SectionTitle>
+                <p className="text-xs text-muted">{t('Logging 2 servings doubles these.')}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {macro('calories', 'Calories (kcal)')}
-                {macro('protein', 'Protein (g)')}
-                {macro('carbs', 'Carbs (g)')}
-                {macro('fat', 'Fat (g)')}
+                {macro('calories', t('Calories (kcal)'))}
+                {macro('protein', t('Protein (g)'))}
+                {macro('carbs', t('Carbs (g)'))}
+                {macro('fat', t('Fat (g)'))}
               </div>
             </section>
           </>

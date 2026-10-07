@@ -1,3 +1,5 @@
+import { lang } from '../lib/i18n'
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
 const TOKEN_KEY = 'macrobridge.token'
 
@@ -24,7 +26,8 @@ export const LOGGED_OUT = 'macrobridge:logged-out'
 
 /** Calls the backend and unwraps its { data, error } envelope. */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = {}
+  // The AI writes meal names and notes in this language
+  const headers: Record<string, string> = { 'Accept-Language': lang }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`

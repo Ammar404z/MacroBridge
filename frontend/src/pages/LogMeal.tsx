@@ -6,6 +6,7 @@ import {
   Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PastDayNote, PrimaryButton, TextArea, TextButton,
 } from '../components/ui'
 import { capitalize, dateQuery, labelForNow, num } from '../lib/format'
+import { t } from '../lib/i18n'
 import { toJpegBase64 } from '../lib/image'
 
 export default function LogMeal() {
@@ -102,11 +103,11 @@ export default function LogMeal() {
     return (
       <form onSubmit={save} className="contents">
         <FlowScreen
-          title={analysis ? 'Check the estimate' : 'Enter macros'}
+          title={t(analysis ? 'Check the estimate' : 'Enter macros')}
           back={startOver}
           actions={<>
-            <PrimaryButton busy={busy}>Save meal</PrimaryButton>
-            <TextButton onClick={startOver}>Start over</TextButton>
+            <PrimaryButton busy={busy}>{t('Save meal')}</PrimaryButton>
+            <TextButton onClick={startOver}>{t('Start over')}</TextButton>
           </>}
         >
           {date && <PastDayNote date={date} />}
@@ -119,21 +120,21 @@ export default function LogMeal() {
                 </div>
               ))}
               <p className="mt-0.5 border-t border-line pt-2.5 text-xs leading-normal text-muted">
-                <span className="font-bold text-ink">{capitalize(analysis.confidence)} confidence.</span> {analysis.notes}
+                <span className="font-bold text-ink">{t(`${capitalize(analysis.confidence)} confidence.`)}</span> {analysis.notes}
               </p>
             </Card>
           )}
           <section className="mt-3.5 flex flex-col gap-3">
-            <Field label="Description" required maxLength={500} value={form.description}
+            <Field label={t('Description')} required maxLength={500} value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <MealSegment value={form.mealLabel} onChange={(mealLabel) => setForm({ ...form, mealLabel })} />
             <div className="grid grid-cols-2 gap-3">
-              {num4('calories', 'Calories (kcal)')}
-              {num4('protein', 'Protein (g)')}
-              {num4('carbs', 'Carbs (g)')}
-              {num4('fat', 'Fat (g)')}
+              {num4('calories', t('Calories (kcal)'))}
+              {num4('protein', t('Protein (g)'))}
+              {num4('carbs', t('Carbs (g)'))}
+              {num4('fat', t('Fat (g)'))}
             </div>
-            <Checkbox label="Also save to my foods" checked={saveToFoods} onChange={setSaveToFoods} />
+            <Checkbox label={t('Also save to my foods')} checked={saveToFoods} onChange={setSaveToFoods} />
             <ErrorMessage message={error} />
           </section>
         </FlowScreen>
@@ -144,43 +145,43 @@ export default function LogMeal() {
   return (
     <form onSubmit={analyze} className="contents">
       <FlowScreen
-        title="Log a meal"
+        title={t('Log a meal')}
         back={`/${dateQuery(date)}`}
         actions={<>
-          <PrimaryButton busy={busy} busyLabel="Analyzing…">Analyze</PrimaryButton>
-          <TextButton onClick={enterManually}>Enter macros manually</TextButton>
+          <PrimaryButton busy={busy} busyLabel={t('Analyzing…')}>{t('Analyze')}</PrimaryButton>
+          <TextButton onClick={enterManually}>{t('Enter macros manually')}</TextButton>
         </>}
       >
         {date && <PastDayNote date={date} />}
         <section className="mt-5 flex flex-col gap-4">
-          <TextArea label="What did you eat?" rows={4} maxLength={500} value={description}
-            onChange={(e) => setDescription(e.target.value)} placeholder="e.g. 2 eggs, toast with butter, a latte"
+          <TextArea label={t('What did you eat?')} rows={4} maxLength={500} value={description}
+            onChange={(e) => setDescription(e.target.value)} placeholder={t('e.g. 2 eggs, toast with butter, a latte')}
             className="h-31" />
 
           <input ref={fileInput} type="file" accept="image/*" className="hidden"
             onChange={(e) => pickPhoto(e.target.files?.[0] ?? null)} />
           {preview ? (
             <div className="relative overflow-hidden rounded-[14px] border border-line">
-              <img src={preview} alt="Selected meal" className="h-44 w-full object-cover" />
+              <img src={preview} alt={t('Selected meal')} className="h-44 w-full object-cover" />
               <div className="absolute right-2 bottom-2 flex gap-2">
                 <button type="button" onClick={() => fileInput.current?.click()}
-                  className="h-9 rounded-full bg-bg/85 px-3.5 text-[13px] font-bold text-ink backdrop-blur">Change</button>
+                  className="h-9 rounded-full bg-bg/85 px-3.5 text-[13px] font-bold text-ink backdrop-blur">{t('Change')}</button>
                 <button type="button" onClick={() => pickPhoto(null)}
-                  className="h-9 rounded-full bg-bg/85 px-3.5 text-[13px] font-bold text-danger backdrop-blur">Remove</button>
+                  className="h-9 rounded-full bg-bg/85 px-3.5 text-[13px] font-bold text-danger backdrop-blur">{t('Remove')}</button>
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => fileInput.current?.click()}
               className="flex h-33 flex-col items-center justify-center gap-2.5 rounded-[14px] border border-dashed border-[#3A434A] hover:bg-surface">
               <CameraIcon className="text-accent" />
-              <span className="text-[15px] font-semibold">Take or choose a photo</span>
-              <span className="text-xs text-muted">Text, a photo, or both</span>
+              <span className="text-[15px] font-semibold">{t('Take or choose a photo')}</span>
+              <span className="text-xs text-muted">{t('Text, a photo, or both')}</span>
             </button>
           )}
 
           <Link to={`/foods${dateQuery(date)}`} className="flex h-13 items-center gap-2.5 rounded-[14px] bg-surface pr-2.5 pl-3.5 hover:bg-surface-2">
             <FoodsIcon size={20} className="text-muted" />
-            <span className="flex-1 text-sm font-semibold">Pick from my foods</span>
+            <span className="flex-1 text-sm font-semibold">{t('Pick from my foods')}</span>
             <ChevronIcon className="text-muted" />
           </Link>
           <ErrorMessage message={error} />

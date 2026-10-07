@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
 import { ErrorMessage, Field, PrimaryButton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { t } from '../lib/i18n'
 
 export default function Login() {
   const { login } = useAuth()
@@ -18,7 +19,7 @@ export default function Login() {
     try {
       await login(email, password)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : t('Login failed'))
     } finally {
       setBusy(false)
     }
@@ -27,19 +28,19 @@ export default function Login() {
   return (
     <AuthLayout
       title="MacroBridge"
-      subtitle={<>Describe a meal or snap a photo.<br />Your macros are logged against today's targets.</>}
+      subtitle={<>{t('Describe a meal or snap a photo.')}<br />{t("Your macros are logged against today's targets.")}</>}
       footer={<>
-        <span>New here?</span>
-        <Link to="/signup" className="flex h-11 items-center px-1 font-bold text-accent">Create an account</Link>
+        <span>{t('New here?')}</span>
+        <Link to="/signup" className="flex h-11 items-center px-1 font-bold text-accent">{t('Create an account')}</Link>
       </>}
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
-        <Field label="Email" type="email" autoComplete="email" required placeholder="you@example.com"
+        <Field label={t('Email')} type="email" autoComplete="email" required placeholder="you@example.com"
           className="h-13" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Password" type="password" autoComplete="current-password" required
+        <Field label={t('Password')} type="password" autoComplete="current-password" required
           className="h-13" value={password} onChange={(e) => setPassword(e.target.value)} />
         <ErrorMessage message={error} />
-        <div className="mt-2.5"><PrimaryButton busy={busy}>Log in</PrimaryButton></div>
+        <div className="mt-2.5"><PrimaryButton busy={busy}>{t('Log in')}</PrimaryButton></div>
       </form>
     </AuthLayout>
   )

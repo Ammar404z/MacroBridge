@@ -4,6 +4,7 @@ import { api, type Food, type MealLabel, type Today } from '../api/client'
 import { MinusIcon, PlusIcon } from '../components/icons'
 import { Card, ErrorMessage, FlowScreen, Loading, MacroStats, MealSegment, PastDayNote, PrimaryButton, TextButton } from '../components/ui'
 import { dateQuery, labelForNow, num, pcf, scale } from '../lib/format'
+import { t } from '../lib/i18n'
 
 const STEP = 0.5
 
@@ -49,13 +50,13 @@ export default function FoodLog() {
 
   return (
     <FlowScreen
-      title="Log a food"
+      title={t('Log a food')}
       back={`/foods${dateQuery(date)}`}
       actions={food && <>
         <PrimaryButton type="button" onClick={log} busy={busy}>
-          Log {servingsText} serving{servings === 1 ? '' : 's'}
+          {t(servings === 1 ? 'Log {n} serving' : 'Log {n} servings', { n: servingsText })}
         </PrimaryButton>
-        <TextButton to={`/foods/${food.id}`}>Edit this food</TextButton>
+        <TextButton to={`/foods/${food.id}`}>{t('Edit this food')}</TextButton>
       </>}
     >
       {date && <PastDayNote date={date} />}
@@ -66,17 +67,17 @@ export default function FoodLog() {
           <Card className="mt-3 flex flex-col gap-1.5 py-4">
             <div className="text-lg font-bold tracking-[-0.01em]">{food.name}</div>
             <div className="text-[13px] text-muted">
-              Per serving ({food.servingLabel}): {num(food.calories)} kcal · {pcf(food)}
+              {t('Per serving ({serving}): {kcal} kcal · {pcf}', { serving: food.servingLabel, kcal: num(food.calories), pcf: pcf(food) })}
             </div>
           </Card>
 
           <section className="mt-6 flex flex-col gap-2.5">
-            <div className="text-[13px] font-semibold text-ink-2">Servings</div>
+            <div className="text-[13px] font-semibold text-ink-2">{t('Servings')}</div>
             <div className="flex items-center justify-between gap-3">
-              <StepButton label="Fewer servings" disabled={servings <= STEP}
+              <StepButton label={t('Fewer servings')} disabled={servings <= STEP}
                 onClick={() => setServings((s) => Math.max(STEP, s - STEP))}><MinusIcon /></StepButton>
               <div className="text-[56px] leading-none font-bold tracking-[-0.03em]" aria-live="polite">{servingsText}</div>
-              <StepButton label="More servings" disabled={servings >= 20}
+              <StepButton label={t('More servings')} disabled={servings >= 20}
                 onClick={() => setServings((s) => Math.min(20, s + STEP))}><PlusIcon /></StepButton>
             </div>
           </section>
@@ -84,13 +85,13 @@ export default function FoodLog() {
           <div className="mt-6"><MealSegment value={mealLabel} onChange={setMealLabel} /></div>
 
           <section className="mt-6 flex flex-col gap-2.5 rounded-[14px] border border-line p-3.5">
-            <div className="text-xs font-semibold text-muted">This adds</div>
+            <div className="text-xs font-semibold text-muted">{t('This adds')}</div>
             <MacroStats macros={adds} />
             {leftAfter != null && (
               <div className="border-t border-line pt-2.5 text-[13px] text-muted">
                 {leftAfter >= 0
-                  ? `Leaves you ${num(leftAfter)} kcal for ${date ? 'that day' : 'today'}.`
-                  : `Puts you ${num(-leftAfter)} kcal over ${date ? "that day's" : "today's"} target.`}
+                  ? t(date ? 'Leaves you {n} kcal for that day.' : 'Leaves you {n} kcal for today.', { n: num(leftAfter) })
+                  : t(date ? "Puts you {n} kcal over that day's target." : "Puts you {n} kcal over today's target.", { n: num(-leftAfter) })}
               </div>
             )}
           </section>

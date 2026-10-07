@@ -5,6 +5,7 @@ import {
   ErrorMessage, Field, FlowScreen, Loading, MealSegment, PrimaryButton, TextButton,
 } from '../components/ui'
 import { dateQuery, localToday } from '../lib/format'
+import { t } from '../lib/i18n'
 
 /** /meals/:id, opened by tapping a meal on Today. */
 export default function EditMeal() {
@@ -41,7 +42,7 @@ export default function EditMeal() {
   }
 
   async function remove() {
-    if (!form || !confirm(`Delete "${form.description}"?`)) return
+    if (!form || !confirm(t('Delete "{name}"?', { name: form.description }))) return
     setBusy(true)
     try {
       await api.deleteMeal(id)
@@ -59,24 +60,24 @@ export default function EditMeal() {
 
   return (
     <form onSubmit={save} className="contents">
-      <FlowScreen title="Edit meal" back={dayUrl} actions={form && <>
-        <PrimaryButton busy={busy}>Save changes</PrimaryButton>
-        <TextButton danger onClick={remove} disabled={busy}>Delete meal</TextButton>
+      <FlowScreen title={t('Edit meal')} back={dayUrl} actions={form && <>
+        <PrimaryButton busy={busy}>{t('Save changes')}</PrimaryButton>
+        <TextButton danger onClick={remove} disabled={busy}>{t('Delete meal')}</TextButton>
       </>}>
         <ErrorMessage message={error} />
         {!form && !error && <Loading />}
         {form && (
           <section className="mt-4 flex flex-col gap-3">
-            <Field label="Description" required maxLength={500} value={form.description}
+            <Field label={t('Description')} required maxLength={500} value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <MealSegment value={form.mealLabel ?? 'snack'} onChange={(mealLabel) => setForm({ ...form, mealLabel })} />
             <div className="grid grid-cols-2 gap-3">
-              {macro('calories', 'Calories (kcal)')}
-              {macro('protein', 'Protein (g)')}
-              {macro('carbs', 'Carbs (g)')}
-              {macro('fat', 'Fat (g)')}
+              {macro('calories', t('Calories (kcal)'))}
+              {macro('protein', t('Protein (g)'))}
+              {macro('carbs', t('Carbs (g)'))}
+              {macro('fat', t('Fat (g)'))}
             </div>
-            <Field label="Day" type="date" required max={localToday()} value={form.logDate ?? ''}
+            <Field label={t('Day')} type="date" required max={localToday()} value={form.logDate ?? ''}
               onChange={(e) => setForm({ ...form, logDate: e.target.value })} />
           </section>
         )}

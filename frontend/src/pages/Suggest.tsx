@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { api, type Suggestion, type Suggestions } from '../api/client'
 import { Card, Empty, ErrorMessage, FlowScreen, MacroStats, Pill, SectionTitle } from '../components/ui'
 import { labelForNow, num, pcf } from '../lib/format'
+import { t } from '../lib/i18n'
 
 export default function Suggest() {
   const navigate = useNavigate()
@@ -51,23 +52,23 @@ export default function Suggest() {
   }
 
   return (
-    <FlowScreen title="Meal ideas" back="/">
+    <FlowScreen title={t('Meal ideas')} back="/">
       {data && (
         <Card className="mt-3 flex flex-col gap-2.5">
-          <div className="text-xs font-semibold text-muted">Left today</div>
+          <div className="text-xs font-semibold text-muted">{t('Left today')}</div>
           <MacroStats macros={data.remaining} />
         </Card>
       )}
 
       <form onSubmit={refresh} className="mt-4 flex flex-col gap-1.5">
-        <label htmlFor="ask" className="text-[13px] font-semibold text-ink-2">Anything in mind? (optional)</label>
+        <label htmlFor="ask" className="text-[13px] font-semibold text-ink-2">{t('Anything in mind? (optional)')}</label>
         <div className="flex gap-2">
           <input id="ask" type="text" maxLength={300} value={ask} onChange={(e) => setAsk(e.target.value)}
-            placeholder="e.g. quick, no cooking"
+            placeholder={t('e.g. quick, no cooking')}
             className="h-12 min-w-0 flex-1 rounded-xl border border-line bg-surface px-3.5 text-base outline-none placeholder:text-muted/70 focus:border-accent" />
           <button type="submit" disabled={loading}
             className="h-12 rounded-xl border border-accent px-4 text-sm font-bold text-accent hover:bg-accent/10 disabled:opacity-60">
-            New ideas
+            {t('New ideas')}
           </button>
         </div>
       </form>
@@ -75,10 +76,10 @@ export default function Suggest() {
       <section className="mt-5 flex flex-col gap-2">
         <ErrorMessage message={error} />
         {loading ? (
-          <Empty>Thinking up meals that fit… this takes a few seconds.</Empty>
+          <Empty>{t('Thinking up meals that fit… this takes a few seconds.')}</Empty>
         ) : data && (
           <>
-            <SectionTitle>{data.suggestions.length} ideas that fit</SectionTitle>
+            <SectionTitle>{t('{n} ideas that fit', { n: data.suggestions.length })}</SectionTitle>
             {data.suggestions.map((s) => (
               <div key={s.name} className="flex flex-col gap-1 rounded-[14px] bg-surface pt-3.5 pr-2.5 pb-2.5 pl-3.5">
                 <div className="text-[15px] font-bold">{s.name}</div>
@@ -88,7 +89,7 @@ export default function Suggest() {
                     <span className="font-bold text-ink">{num(s.calories)} kcal</span> · {pcf(s)}
                   </div>
                   <Pill onClick={() => logIdea(s)} disabled={logging !== null}>
-                    {logging === s.name ? 'Logging…' : 'Log this'}
+                    {t(logging === s.name ? 'Logging…' : 'Log this')}
                   </Pill>
                 </div>
               </div>

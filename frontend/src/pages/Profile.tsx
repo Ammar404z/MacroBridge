@@ -6,6 +6,7 @@ import { ChevronIcon } from '../components/icons'
 import { ErrorMessage, Field, Loading, PageHeader, PrimaryButton, SectionTitle, selectCls, TabScreen, TextButton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { kcalFromMacros, num } from '../lib/format'
+import { lang, setLang, t, type Lang } from '../lib/i18n'
 import { toAvatarBase64 } from '../lib/image'
 
 const ZONES: string[] = Intl.supportedValuesOf?.('timeZone') ?? []
@@ -45,7 +46,7 @@ export default function Profile() {
   }
 
   async function removePhoto() {
-    if (!confirm('Remove your profile picture?')) return
+    if (!confirm(t('Remove your profile picture?'))) return
     setPhotoBusy(true)
     try {
       const updated = await api.deleteAvatar()
@@ -58,7 +59,7 @@ export default function Profile() {
   }
 
   function confirmLogout() {
-    if (confirm('Log out of MacroBridge?')) logout()
+    if (confirm(t('Log out of MacroBridge?'))) logout()
   }
 
   async function save(e: FormEvent) {
@@ -88,24 +89,24 @@ export default function Profile() {
   return (
     <TabScreen>
       <form onSubmit={save} className="flex min-h-[calc(100dvh-84px-env(safe-area-inset-bottom)-40px)] flex-col">
-        <PageHeader title="Profile" />
+        <PageHeader title={t('Profile')} />
         <ErrorMessage message={error} />
         {!form && !error && <Loading />}
         {form && (
           <>
             <section className="mt-2.5 flex items-center gap-4">
-              <button type="button" onClick={() => fileInput.current?.click()} aria-label="Change profile picture"
+              <button type="button" onClick={() => fileInput.current?.click()} aria-label={t('Change profile picture')}
                 disabled={photoBusy} className="rounded-full disabled:opacity-60">
                 <Avatar id={user!.id} name={form.displayName || user!.email} version={form.avatarVersion} size={72} />
               </button>
               <div className="flex flex-col items-start">
                 <button type="button" onClick={() => fileInput.current?.click()} disabled={photoBusy}
                   className="h-9 text-sm font-bold text-accent disabled:opacity-60">
-                  {photoBusy ? 'Uploading…' : form.avatarVersion ? 'Change photo' : 'Add a photo'}
+                  {t(photoBusy ? 'Uploading…' : form.avatarVersion ? 'Change photo' : 'Add a photo')}
                 </button>
                 {form.avatarVersion && (
                   <button type="button" onClick={removePhoto} disabled={photoBusy}
-                    className="h-9 text-sm font-semibold text-muted hover:text-danger disabled:opacity-60">Remove</button>
+                    className="h-9 text-sm font-semibold text-muted hover:text-danger disabled:opacity-60">{t('Remove')}</button>
                 )}
               </div>
               <input ref={fileInput} type="file" accept="image/*" className="hidden"
@@ -113,45 +114,52 @@ export default function Profile() {
             </section>
 
             <section className="mt-4 flex flex-col gap-3">
-              <Field label="Display name" maxLength={100} value={form.displayName ?? ''}
+              <Field label={t('Display name')} maxLength={100} value={form.displayName ?? ''}
                 onChange={(e) => update({ displayName: e.target.value })} />
               <label className="flex flex-col gap-1.5">
-                <span className="text-[13px] font-semibold text-ink-2">Timezone</span>
+                <span className="text-[13px] font-semibold text-ink-2">{t('Timezone')}</span>
                 <select value={form.timezone} onChange={(e) => update({ timezone: e.target.value })} className={selectCls}>
                   {zones.map((z) => <option key={z} value={z}>{z}</option>)}
                 </select>
-                <span className="text-xs text-muted">Decides when your day resets.</span>
+                <span className="text-xs text-muted">{t('Decides when your day resets.')}</span>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[13px] font-semibold text-ink-2">{t('Language')}</span>
+                <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} className={selectCls}>
+                  <option value="en">English</option>
+                  <option value="de">Deutsch</option>
+                </select>
               </label>
             </section>
 
             <section className="mt-[18px] flex flex-col gap-2.5">
-              <SectionTitle>Daily targets</SectionTitle>
+              <SectionTitle>{t('Daily targets')}</SectionTitle>
               <div className="grid grid-cols-2 gap-3">
-                {target('targetCalories', 'Calories (kcal)')}
-                {target('targetProtein', 'Protein (g)')}
-                {target('targetCarbs', 'Carbs (g)')}
-                {target('targetFat', 'Fat (g)')}
+                {target('targetCalories', t('Calories (kcal)'))}
+                {target('targetProtein', t('Protein (g)'))}
+                {target('targetCarbs', t('Carbs (g)'))}
+                {target('targetFat', t('Fat (g)'))}
               </div>
               <p className="text-xs text-muted">
-                Your macros add up to {num(kcalFromMacros({ protein: form.targetProtein, carbs: form.targetCarbs, fat: form.targetFat }))} kcal.
+                {t('Your macros add up to {n} kcal.', { n: num(kcalFromMacros({ protein: form.targetProtein, carbs: form.targetCarbs, fat: form.targetFat })) })}
               </p>
             </section>
 
             <label className="mt-3 flex h-13 items-center justify-between gap-3 rounded-[14px] bg-surface px-3.5">
-              <span className="text-sm font-semibold">Friends can see my meals</span>
+              <span className="text-sm font-semibold">{t('Friends can see my meals')}</span>
               <input type="checkbox" checked={form.shareMeals} onChange={(e) => update({ shareMeals: e.target.checked })}
                 className="m-0 size-[22px] accent-accent" />
             </label>
 
             <Link to="/profile/password"
               className="mt-2 flex h-13 items-center justify-between gap-3 rounded-[14px] bg-surface pr-2.5 pl-3.5 hover:bg-surface-2">
-              <span className="text-sm font-semibold">Change password</span>
+              <span className="text-sm font-semibold">{t('Change password')}</span>
               <ChevronIcon className="text-muted" />
             </Link>
 
             <div className="mt-auto flex flex-col gap-0.5 pt-6">
-              <PrimaryButton busy={busy}>{saved ? 'Saved' : 'Save changes'}</PrimaryButton>
-              <TextButton onClick={confirmLogout}>Log out</TextButton>
+              <PrimaryButton busy={busy}>{t(saved ? 'Saved' : 'Save changes')}</PrimaryButton>
+              <TextButton onClick={confirmLogout}>{t('Log out')}</TextButton>
             </div>
           </>
         )}
