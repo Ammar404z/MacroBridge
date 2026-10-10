@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.macrobridge.gemini.GeminiClient.Suggestion;
 
 import jakarta.validation.Valid;
@@ -51,13 +52,17 @@ public final class MealDtos {
             @Pattern(regexp = "low|medium|high") String confidence,
             @Size(max = 1000) String aiNotes,
             // Optional: log to a past day (e.g. a forgotten dinner); defaults to today
-            LocalDate logDate) {}
+            LocalDate logDate,
+            // Optional: the meal's photo, a JPEG the frontend shrinks to 800 px
+            @Size(max = 400_000) String photoBase64) {}
 
+    /** items is the per-item breakdown (a JSON array of MealItem, passed through as stored), or null. */
     public record MealDto(
             UUID id, String mealLabel, String description, String source,
             int calories, double protein, double carbs, double fat,
             double servings, UUID customFoodId,
-            String confidence, String aiNotes, OffsetDateTime loggedAt, LocalDate logDate) {}
+            String confidence, String aiNotes, OffsetDateTime loggedAt, LocalDate logDate,
+            @JsonRawValue String items, boolean hasPhoto) {}
 
     public record SuggestRequest(@Size(max = 300) String request) {}
 

@@ -85,6 +85,8 @@ export type LogInput = Macros & {
   aiNotes?: string
   /** YYYY-MM-DD; omit for today */
   logDate?: string
+  /** JPEG, see toJpegBase64(file, 800) */
+  photoBase64?: string
 }
 
 export type Meal = Macros & {
@@ -99,6 +101,9 @@ export type Meal = Macros & {
   loggedAt: string
   /** YYYY-MM-DD, the day it counts towards */
   logDate: string
+  /** What the AI saw in it; null for manual entries and saved foods */
+  items: MealItem[] | null
+  hasPhoto: boolean
 }
 
 export type Today = { date: string; logs: Meal[]; totals: Macros; targets: Macros }
@@ -136,6 +141,8 @@ export type FeedMeal = Macros & {
   mealLabel: MealLabel
   description: string
   loggedAt: string
+  items: MealItem[] | null
+  hasPhoto: boolean
 }
 export type FriendsOverview = {
   inviteCode: string
@@ -151,27 +158,29 @@ export type InvitePreview = { person: Person; relation: Relation }
 export type Suggestion = Macros & { name: string; description: string }
 export type Suggestions = { remaining: Macros; suggestions: Suggestion[] }
 
-const avatarCache = new Map<string, Promise<string>>()
+const imageCache = new Map<string, Promise<string>>()
 
-/**
- * Object URL for a user's picture. <img> can't send the auth header, so it's fetched here
- * and cached per version (a new upload gets a new version).
- */
-export function avatarUrl(userId: string, version: number): Promise<string> {
-  const key = `${userId}:${version}`
-  let url = avatarCache.get(key)
+/** Object URL for an image the API serves. <img> can't send the auth header, so it's fetched here and cached. */
+function imageUrl(path: string): Promise<string> {
+  let url = imageCache.get(path)
   if (!url) {
-    url = fetch(`${API_URL}/avatars/${userId}?v=${version}`, { headers: { Authorization: `Bearer ${getToken()}` } })
+    url = fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${getToken()}` } })
       .then((res) => {
         if (!res.ok) throw new ApiError('No picture', res.status)
         return res.blob()
       })
       .then((blob) => URL.createObjectURL(blob))
-    url.catch(() => avatarCache.delete(key))
-    avatarCache.set(key, url)
+    url.catch(() => imageCache.delete(path))
+    imageCache.set(path, url)
   }
   return url
 }
+
+/** A user's picture, cached per version (a new upload gets a new version). */
+export const avatarUrl = (userId: string, version: number) => imageUrl(`/avatars/${userId}?v=${version}`)
+
+/** The photo a meal was logged with (it never changes). */
+export const mealPhotoUrl = (mealId: string) => imageUrl(`/meals/${mealId}/photo`)
 
 export const api = {
   register: (input: RegisterInput) => request<AuthResponse>('POST', '/auth/register', input),

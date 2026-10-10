@@ -8,8 +8,10 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.macrobridge.common.ApiException;
+import com.macrobridge.common.Jpeg;
 import com.macrobridge.food.FoodRepository;
 import com.macrobridge.food.FoodRepository.Food;
 import com.macrobridge.gemini.AiQuota;
@@ -69,9 +71,14 @@ public class MealService {
         return new Analysis(result.items(), totals, result.title(), result.confidence(), result.notes());
     }
 
+    @Transactional
     public MealDto log(UUID userId, LogRequest req) {
         String items = req.items() == null || req.items().isEmpty() ? null : json.writeValueAsString(req.items());
-        return meals.insert(userId, logDate(userId, req.logDate()), req, items, null, 1);
+        byte[] photo = req.photoBase64() == null || req.photoBase64().isBlank() ? null : Jpeg.decode(req.photoBase64());
+        MealDto meal = meals.insert(userId, logDate(userId, req.logDate()), req, items, null, 1);
+        if (photo == null) return meal;
+        meals.savePhoto(meal.id(), photo);
+        return find(userId, meal.id());
     }
 
     /** logDate is optional (null = today), like for /log. */
@@ -82,7 +89,7 @@ public class MealService {
                 round1(food.protein() * servings),
                 round1(food.carbs() * servings),
                 round1(food.fat() * servings),
-                mealLabel, "custom_food", null, null, null, null);
+                mealLabel, "custom_food", null, null, null, null, null);
         return meals.insert(userId, logDate(userId, logDate), req, null, food.id(), servings);
     }
 
@@ -133,6 +140,10 @@ public class MealService {
 
     public MealDto find(UUID userId, UUID mealId) {
         return meals.find(userId, mealId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Meal not found"));
+    }
+
+    public byte[] photo(UUID viewer, UUID mealId) {
+        return meals.findPhoto(viewer, mealId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No photo"));
     }
 
     public MealDto edit(UUID userId, UUID mealId, EditMealRequest req) {

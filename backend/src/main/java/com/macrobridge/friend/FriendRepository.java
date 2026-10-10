@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 @Repository
 public class FriendRepository {
 
@@ -24,7 +26,7 @@ public class FriendRepository {
 
     public record FeedRow(UUID mealId, UUID userId, String name, Long avatarVersion, String mealLabel,
                           String description, int calories, double protein, double carbs, double fat,
-                          OffsetDateTime loggedAt) {}
+                          OffsetDateTime loggedAt, @JsonRawValue String items, boolean hasPhoto) {}
 
     public record Link(UUID requesterId, UUID addresseeId, String status) {}
 
@@ -127,7 +129,8 @@ public class FriendRepository {
     public List<FeedRow> feed(UUID me, int limit) {
         return jdbc.sql("""
                 select m.id as meal_id, u.id as user_id, %s as name, %s as avatar_version, m.meal_label,
-                       m.description, m.calories, m.protein, m.carbs, m.fat, m.logged_at
+                       m.description, m.calories, m.protein, m.carbs, m.fat, m.logged_at, m.items,
+                       exists (select 1 from meal_photos ph where ph.meal_id = m.id) as has_photo
                 from friendships f
                 join users u on u.id = case when f.requester_id = :me then f.addressee_id else f.requester_id end
                 join profiles p on p.user_id = u.id and p.share_meals

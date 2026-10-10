@@ -1,9 +1,13 @@
 package com.macrobridge.meal;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -75,6 +79,16 @@ public class MealController {
     @GetMapping("/{id}")
     ApiResponse<MealDto> find(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         return ApiResponse.ok(mealService.find(userId(jwt), id));
+    }
+
+    /** The raw JPEG; yours, or a friend's who shares their meals. A meal's photo never changes, so it's cached. */
+    @GetMapping("/{id}/photo")
+    ResponseEntity<byte[]> photo(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        byte[] image = mealService.photo(userId(jwt), id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate())
+                .body(image);
     }
 
     @PutMapping("/{id}")

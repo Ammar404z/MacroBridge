@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { api, type FriendDay } from '../api/client'
+import { api, type FriendDay, type Meal } from '../api/client'
+import { hasDetails, MealDetails } from '../components/MealDetails'
 import { Avatar } from '../components/Avatar'
 import { CalorieRing } from '../components/CalorieRing'
-import { CheckIcon } from '../components/icons'
+import { CheckIcon, ChevronIcon } from '../components/icons'
 import { Card, Empty, ErrorMessage, Loading, MacroTiles, PageHeader, SectionTitle, TabScreen } from '../components/ui'
 import { capitalize, num, pcf, shortName } from '../lib/format'
 import { t } from '../lib/i18n'
@@ -72,15 +73,7 @@ export default function FriendProfile() {
               <section className="mt-[22px] flex flex-col gap-2">
                 <SectionTitle>{t("Today's meals")}</SectionTitle>
                 {day.logs.length === 0 && <Empty>{t('Nothing logged yet today.')}</Empty>}
-                {day.logs.map((m) => (
-                  <div key={m.id} className="flex h-14 items-center gap-3 rounded-[14px] bg-surface px-3.5">
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <div className="truncate text-sm font-semibold">{m.description}</div>
-                      <div className="text-xs text-muted">{t(capitalize(m.mealLabel))} · {pcf(m)}</div>
-                    </div>
-                    <div className="text-[15px] font-bold">{num(m.calories)}</div>
-                  </div>
-                ))}
+                {day.logs.map((m) => <FriendMeal key={m.id} meal={m} />)}
               </section>
             </>
           ) : (
@@ -89,5 +82,32 @@ export default function FriendProfile() {
         </>
       )}
     </TabScreen>
+  )
+}
+
+/** A friend's meal; tap it to see the photo and what's in it, when there's any. */
+function FriendMeal({ meal: m }: { meal: Meal }) {
+  const [open, setOpen] = useState(false)
+  const row = (
+    <>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="truncate text-sm font-semibold">{m.description}</div>
+        <div className="text-xs text-muted">{t(capitalize(m.mealLabel))} · {pcf(m)}</div>
+      </div>
+      <div className="text-[15px] font-bold">{num(m.calories)}</div>
+    </>
+  )
+  if (!hasDetails(m)) {
+    return <div className="flex h-14 items-center gap-3 rounded-[14px] bg-surface px-3.5">{row}</div>
+  }
+  // Rendered only once opened, so the photo isn't downloaded for meals nobody taps
+  return (
+    <details onToggle={(e) => setOpen(e.currentTarget.open)} className="group rounded-[14px] bg-surface">
+      <summary className="flex h-14 cursor-pointer list-none items-center gap-3 px-3.5 [&::-webkit-details-marker]:hidden">
+        {row}
+        <ChevronIcon className="text-muted transition-transform group-open:rotate-90" />
+      </summary>
+      {open && <div className="px-3.5 pb-3.5"><MealDetails meal={m} /></div>}
+    </details>
   )
 }

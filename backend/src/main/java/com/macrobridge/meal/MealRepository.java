@@ -25,7 +25,8 @@ public class MealRepository {
 
     private static final String COLUMNS = """
             id, meal_label, description, source, calories, protein, carbs, fat,
-            servings, custom_food_id, confidence, ai_notes, logged_at, log_date
+            servings, custom_food_id, confidence, ai_notes, logged_at, log_date, items,
+            exists (select 1 from meal_photos ph where ph.meal_id = meals.id) as has_photo
             """;
 
     /**
@@ -114,6 +115,31 @@ public class MealRepository {
                         new Macros(rs.getInt("calories"), rs.getDouble("protein"),
                                 rs.getDouble("carbs"), rs.getDouble("fat"))))
                 .list();
+    }
+
+    public void savePhoto(UUID mealId, byte[] image) {
+        jdbc.sql("insert into meal_photos (meal_id, image) values (:mealId, :image)")
+                .param("mealId", mealId)
+                .param("image", image)
+                .update();
+    }
+
+    /** The photo, if the viewer owns the meal or is friends with an owner who shares their meals. */
+    public Optional<byte[]> findPhoto(UUID viewer, UUID mealId) {
+        return jdbc.sql("""
+                select ph.image from meal_photos ph
+                join meals m on m.id = ph.meal_id
+                where ph.meal_id = :mealId and (m.user_id = :viewer or exists (
+                  select 1 from friendships f
+                  join profiles p on p.user_id = m.user_id and p.share_meals
+                  where f.status = 'accepted'
+                    and ((f.requester_id = :viewer and f.addressee_id = m.user_id)
+                      or (f.addressee_id = :viewer and f.requester_id = m.user_id))))
+                """)
+                .param("viewer", viewer)
+                .param("mealId", mealId)
+                .query(byte[].class)
+                .optional();
     }
 
     /** Returns false if the meal doesn't exist or belongs to someone else. */

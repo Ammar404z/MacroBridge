@@ -2,10 +2,11 @@ import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api, type Analysis, type LogInput } from '../api/client'
 import { CameraIcon, ChevronIcon, FoodsIcon } from '../components/icons'
+import { ItemRows } from '../components/MealDetails'
 import {
   Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PastDayNote, PrimaryButton, TextArea, TextButton,
 } from '../components/ui'
-import { capitalize, dateQuery, labelForNow, num } from '../lib/format'
+import { capitalize, dateQuery, labelForNow } from '../lib/format'
 import { t } from '../lib/i18n'
 import { toJpegBase64 } from '../lib/image'
 
@@ -87,7 +88,8 @@ export default function LogMeal() {
         await api.createFood({ name, calories, protein, carbs, fat })
         setFoodSaved(true)
       }
-      await api.logMeal({ ...form, logDate: date ?? undefined })
+      const photoBase64 = photo ? await toJpegBase64(photo, 800) : undefined
+      await api.logMeal({ ...form, logDate: date ?? undefined, photoBase64 })
       navigate(`/${dateQuery(date)}`, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
@@ -113,12 +115,7 @@ export default function LogMeal() {
           {date && <PastDayNote date={date} />}
           {analysis && (
             <Card className="mt-3 flex flex-col gap-2">
-              {analysis.items.map((item, i) => (
-                <div key={i} className="flex justify-between gap-2 text-[13px]">
-                  <div>{item.name} <span className="text-muted">({item.portion})</span></div>
-                  <div className="shrink-0 text-ink-2">{num(item.calories)} kcal</div>
-                </div>
-              ))}
+              <ItemRows items={analysis.items} />
               <p className="mt-0.5 border-t border-line pt-2.5 text-xs leading-normal text-muted">
                 <span className="font-bold text-ink">{t(`${capitalize(analysis.confidence)} confidence.`)}</span> {analysis.notes}
               </p>

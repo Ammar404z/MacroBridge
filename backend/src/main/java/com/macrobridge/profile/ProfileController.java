@@ -1,7 +1,6 @@
 package com.macrobridge.profile;
 
 import java.math.BigDecimal;
-import java.util.Base64;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.macrobridge.common.ApiException;
 import com.macrobridge.common.ApiResponse;
+import com.macrobridge.common.Jpeg;
 import com.macrobridge.common.Timezones;
 import com.macrobridge.profile.ProfileRepository.ProfileRow;
 
@@ -66,16 +66,7 @@ public class ProfileController {
 
     @PutMapping("/api/profile/avatar")
     ApiResponse<ProfileRow> uploadAvatar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AvatarRequest req) {
-        byte[] image;
-        try {
-            image = Base64.getDecoder().decode(req.imageBase64());
-        } catch (IllegalArgumentException e) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "imageBase64 is not valid base64");
-        }
-        // JPEG files start with FF D8 FF
-        if (image.length < 3 || (image[0] & 0xFF) != 0xFF || (image[1] & 0xFF) != 0xD8 || (image[2] & 0xFF) != 0xFF) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "The picture must be a JPEG");
-        }
+        byte[] image = Jpeg.decode(req.imageBase64());
         UUID userId = UUID.fromString(jwt.getSubject());
         avatars.save(userId, image);
         return ApiResponse.ok(find(userId));

@@ -13,10 +13,10 @@ function toBase64(canvas: HTMLCanvasElement, quality: number) {
   return canvas.toDataURL('image/jpeg', quality).split(',')[1]
 }
 
-/** Shrinks a photo to a JPEG at most 1280px wide/tall so uploads stay small. */
-export async function toJpegBase64(file: File): Promise<string> {
+/** Shrinks a photo to a JPEG at most maxSide px wide/tall: 1280 for the AI to read, 800 to keep with the meal. */
+export async function toJpegBase64(file: File, maxSide = 1280): Promise<string> {
   const img = await load(file)
-  const scale = Math.min(1, 1280 / Math.max(img.width, img.height))
+  const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(img.width * scale)
   canvas.height = Math.round(img.height * scale)

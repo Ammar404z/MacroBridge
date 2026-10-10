@@ -173,6 +173,9 @@ const DE: Record<string, string> = {
   'Text, a photo, or both': 'Text, Foto oder beides',
   'Pick from my foods': 'Aus meinen Lebensmitteln wählen',
   'Edit meal': 'Mahlzeit bearbeiten',
+  'Meal photo': 'Foto der Mahlzeit',
+  "What's in it": 'Was drin ist',
+  'Hide': 'Ausblenden',
   'Delete meal': 'Mahlzeit löschen',
   'Day': 'Tag',
 

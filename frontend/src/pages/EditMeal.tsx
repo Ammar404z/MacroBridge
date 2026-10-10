@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { api, type EditMealInput } from '../api/client'
+import { api, type EditMealInput, type Meal } from '../api/client'
+import { hasDetails, MealDetails } from '../components/MealDetails'
 import {
   ErrorMessage, Field, FlowScreen, Loading, MealSegment, PrimaryButton, TextButton,
 } from '../components/ui'
@@ -11,16 +12,20 @@ import { t } from '../lib/i18n'
 export default function EditMeal() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const [meal, setMeal] = useState<Meal | null>(null)
   const [form, setForm] = useState<EditMealInput | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     api.meal(id)
-      .then((m) => setForm({
-        description: m.description, calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
-        mealLabel: m.mealLabel, logDate: m.logDate,
-      }))
+      .then((m) => {
+        setMeal(m)
+        setForm({
+          description: m.description, calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
+          mealLabel: m.mealLabel, logDate: m.logDate,
+        })
+      })
       .catch((e) => setError(e.message))
   }, [id])
 
@@ -68,6 +73,7 @@ export default function EditMeal() {
         {!form && !error && <Loading />}
         {form && (
           <section className="mt-4 flex flex-col gap-3">
+            {meal && hasDetails(meal) && <MealDetails meal={meal} />}
             <Field label={t('Description')} required maxLength={500} value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <MealSegment value={form.mealLabel ?? 'snack'} onChange={(mealLabel) => setForm({ ...form, mealLabel })} />

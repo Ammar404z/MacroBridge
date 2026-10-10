@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { api, type FeedMeal, type Friend, type FriendsOverview, type Person } from '../api/client'
 import { Avatar } from '../components/Avatar'
 import { CalorieRing } from '../components/CalorieRing'
+import { ItemRows, MealPhoto } from '../components/MealDetails'
 import { FRIENDS_CHANGED } from '../components/TabBar'
 import { PlusIcon } from '../components/icons'
 import { Card, Empty, ErrorMessage, Loading, PageHeader, Pill, SectionTitle, TabScreen } from '../components/ui'
@@ -52,7 +53,7 @@ export default function Friends() {
     try {
       await api.logMeal({
         description: m.description, calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
-        mealLabel: labelForNow(), source: 'text',
+        mealLabel: labelForNow(), source: 'text', items: m.items ?? undefined,
       })
       setLogged((s) => new Set(s).add(m.mealId))
     } catch (e) {
@@ -145,10 +146,21 @@ export default function Friends() {
                   {t(logged.has(m.mealId) ? 'Logged' : 'Log this')}
                 </Pill>
               </div>
+              {/* ponytail: every feed photo downloads on open (up to 30, ~100 KB each); lazy-load if the feed gets slow */}
+              {m.hasPhoto && <MealPhoto id={m.mealId} className="mt-1 h-44" />}
               <div className="text-sm font-semibold">{m.description}</div>
               <div className="text-[13px] text-ink-2">
                 <span className="font-bold text-ink">{num(m.calories)} kcal</span> · {pcf(m)}
               </div>
+              {!!m.items?.length && (
+                <details className="group">
+                  <summary className="cursor-pointer list-none py-1 text-[13px] font-semibold text-accent [&::-webkit-details-marker]:hidden">
+                    <span className="group-open:hidden">{t("What's in it")}</span>
+                    <span className="hidden group-open:inline">{t('Hide')}</span>
+                  </summary>
+                  <div className="mt-1 flex flex-col gap-2"><ItemRows items={m.items} /></div>
+                </details>
+              )}
             </div>
           ))}
         </section>
