@@ -31,7 +31,9 @@ cd frontend && npm install && npm run dev # app on http://localhost:5173 (Node 2
 ```
 Both read their settings from the repo-root `.env`.
 
-Local development uses the local database, never the live one. Browse it in Studio at http://127.0.0.1:54323. `supabase db reset` wipes it and re-applies all migrations. `supabase stop` shuts it down.
+Local development uses the local database, never the live one. Browse it in Studio at http://127.0.0.1:54323. `supabase db reset` wipes it, re-applies all migrations and loads the demo data. `supabase stop` shuts it down and keeps the data.
+
+**Demo data** (`supabase/seed.sql`, local only): log in as `demo@macrobridge.local` / `password123`. You get 30 days of meals, saved foods, friends with photo meals (Jonas, Lena), a friend who doesn't share (Mia) and friend requests both ways. Every demo account uses the same password, e.g. `jonas@macrobridge.local`. Dates are relative, so a reset always gives a fresh today.
 
 **Schema changes:** add a new file in `supabase/migrations/`, test it with `supabase db reset`, and apply it to the live database only after that (`supabase link --project-ref wkgohhlgqrfajqsbxkuy` once, then `supabase db push`). Push migrations **before** deploying backend code that needs them.
 
