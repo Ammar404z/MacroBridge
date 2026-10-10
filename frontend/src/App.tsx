@@ -12,6 +12,7 @@ import Invite from './pages/Invite'
 import LogMeal from './pages/LogMeal'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import Progress from './pages/Progress'
 import Signup from './pages/Signup'
 import Suggest from './pages/Suggest'
 import Today from './pages/Today'
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/" element={authed(<Today />)} />
           <Route path="/log" element={authed(<LogMeal />)} />
           <Route path="/meals/:id" element={authed(<EditMeal />)} />
+          <Route path="/progress" element={authed(<Progress />)} />
           <Route path="/suggest" element={authed(<Suggest />)} />
           <Route path="/foods" element={authed(<Foods />)} />
           <Route path="/foods/new" element={authed(<FoodEdit />)} />

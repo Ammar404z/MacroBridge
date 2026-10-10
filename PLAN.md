@@ -97,7 +97,7 @@ RLS is enabled with no policies on every table, so the public Supabase Data API 
 ### Next up
 - [x] **Test environment**: local Supabase (`supabase start`) for development, so testing doesn't touch live data
 - [x] Automatic backend deploys on push (GitHub Actions)
-- [ ] History chart (calories per day over 30 days; `GET /api/meals/history` already exists)
+- [x] History chart: Progress screen (calories + protein over 30 days, streak, days on target)
 - [ ] Delete account
 - [ ] Forgot password by email (needs an email service)
 - [ ] Meal type on past days defaults to the current time of day; pick a smarter default

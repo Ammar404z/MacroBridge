@@ -6,6 +6,7 @@ import { BackIcon, ChevronIcon, PlusIcon, TrashIcon } from '../components/icons'
 import { Empty, ErrorMessage, Loading, MacroTiles, Pill, SectionTitle, TabScreen } from '../components/ui'
 import { addDays, capitalize, dateQuery, localToday, longDate, num, pcf } from '../lib/format'
 import { t } from '../lib/i18n'
+import { everyDay, streak } from '../lib/progress'
 
 /** Today, or any past day via ?date=YYYY-MM-DD (the ‹ › arrows). */
 export default function Today() {
@@ -18,6 +19,12 @@ export default function Today() {
 
   const [loaded, setLoaded] = useState<{ date: string | null; data: TodayData } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [days, setDays] = useState<number | null>(null)
+
+  // Only for the streak on the Progress row, so failures stay quiet
+  useEffect(() => {
+    api.history(30).then((h) => setDays(streak(everyDay(h)))).catch(() => {})
+  }, [])
 
   const load = (d: string | null) => (d ? api.day(d) : api.today())
 
@@ -62,12 +69,17 @@ export default function Today() {
       </header>
       <ErrorMessage message={error} />
       {!data && !error && <Loading />}
-      {data && <DayBody day={data} past={date} onDelete={remove} />}
+      {data && <DayBody day={data} past={date} streakDays={days} onDelete={remove} />}
     </TabScreen>
   )
 }
 
-function DayBody({ day, past, onDelete }: { day: TodayData; past: string | null; onDelete: (m: Meal) => void }) {
+function DayBody({ day, past, streakDays, onDelete }: {
+  day: TodayData
+  past: string | null
+  streakDays: number | null
+  onDelete: (m: Meal) => void
+}) {
   const { totals, targets } = day
   const left = targets.calories - totals.calories
 
@@ -99,6 +111,15 @@ function DayBody({ day, past, onDelete }: { day: TodayData; past: string | null;
           <ChevronIcon className="text-accent" />
         </Link>
       )}
+
+      <Link to="/progress"
+        className="mt-2 flex h-13 items-center justify-between gap-2 rounded-[14px] border border-line pr-2.5 pl-3.5 hover:bg-surface">
+        <span className="text-sm font-semibold">{t('Progress')}</span>
+        <span className="flex items-center gap-1 text-[13px] text-muted">
+          {!!streakDays && t('{n}-day streak', { n: streakDays })}
+          <ChevronIcon className="text-accent" />
+        </span>
+      </Link>
 
       <section className="mt-5 flex flex-col gap-2">
         <SectionTitle>{t('Meals')}</SectionTitle>
