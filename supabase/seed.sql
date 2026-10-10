@@ -58,7 +58,8 @@ do $seed$ begin
     ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000f', 'pending', null);
 
   -- ---------------------------------------------------------------------------
-  -- Alex: 30 days of breakfast, lunch, dinner and a snack every third day.
+  -- Alex: 30 days of breakfast, lunch, dinner and a snack every third day (yesterday included,
+  -- so Today offers "Same as yesterday's ..." from the afternoon on).
   -- Days 9 and 17 ago are skipped, so the streak is 9 (today plus 8 days).
   -- ---------------------------------------------------------------------------
   create temp table dishes (label text, n int, title text, items jsonb);
@@ -86,7 +87,7 @@ do $seed$ begin
   cross join (values (0, 'breakfast', 8), (1, 'lunch', 13), (2, 'dinner', 19), (3, 'snack', 16)) s(slot, label, hour)
   join dishes d on d.label = s.label
     and d.n = (ago * 5 + s.slot * 3) % (select count(*) from dishes x where x.label = s.label)
-  where ago not in (9, 17) and (s.slot < 3 or ago % 3 = 0);
+  where ago not in (9, 17) and (s.slot < 3 or ago % 3 = 1);
 
   -- Today so far: breakfast and lunch
   perform pg_temp.meal('00000000-0000-0000-0000-00000000000a', now() - interval '4 hours', 'breakfast',

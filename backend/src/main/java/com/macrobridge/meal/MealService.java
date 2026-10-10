@@ -34,6 +34,8 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class MealService {
 
+    private static final int RECENT_LIMIT = 15;
+
     private final MealRepository meals;
     private final ProfileRepository profiles;
     private final FoodRepository foods;
@@ -140,6 +142,10 @@ public class MealService {
 
     public MealDto find(UUID userId, UUID mealId) {
         return meals.find(userId, mealId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Meal not found"));
+    }
+
+    public List<MealDto> recent(UUID userId) {
+        return meals.recent(userId, RECENT_LIMIT);
     }
 
     public byte[] photo(UUID viewer, UUID mealId) {

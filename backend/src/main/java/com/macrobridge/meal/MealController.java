@@ -2,6 +2,7 @@ package com.macrobridge.meal;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.CacheControl;
@@ -74,6 +75,12 @@ public class MealController {
                                          @RequestParam(defaultValue = "30") int days) {
         if (days < 1 || days > 365) throw new ApiException(HttpStatus.BAD_REQUEST, "days must be between 1 and 365");
         return ApiResponse.ok(mealService.history(userId(jwt), days));
+    }
+
+    /** Your latest meal of each distinct name (up to 15), newest first. */
+    @GetMapping("/recent")
+    ApiResponse<List<MealDto>> recent(@AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.ok(mealService.recent(userId(jwt)));
     }
 
     @GetMapping("/{id}")

@@ -4,7 +4,7 @@ import { api, type Meal, type Today as TodayData } from '../api/client'
 import { CalorieRing } from '../components/CalorieRing'
 import { BackIcon, ChevronIcon, PlusIcon, TrashIcon } from '../components/icons'
 import { Empty, ErrorMessage, Loading, MacroTiles, Pill, SectionTitle, TabScreen } from '../components/ui'
-import { addDays, capitalize, dateQuery, localToday, longDate, num, pcf } from '../lib/format'
+import { addDays, capitalize, dateQuery, labelForNow, localToday, longDate, num, pcf, relogInput } from '../lib/format'
 import { t } from '../lib/i18n'
 import { everyDay, streak } from '../lib/progress'
 
@@ -34,11 +34,13 @@ export default function Today() {
 
   const go = (d: string) => setParams(d >= today ? {} : { date: d }, { replace: true })
 
+  const reload = async () => setLoaded({ date, data: await load(date) })
+
   async function remove(meal: Meal) {
     if (!confirm(t('Delete "{name}"?', { name: meal.description }))) return
     try {
       await api.deleteMeal(meal.id)
-      setLoaded({ date, data: await load(date) })
+      await reload()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed')
     }
@@ -69,16 +71,17 @@ export default function Today() {
       </header>
       <ErrorMessage message={error} />
       {!data && !error && <Loading />}
-      {data && <DayBody day={data} past={date} streakDays={days} onDelete={remove} />}
+      {data && <DayBody day={data} past={date} streakDays={days} onDelete={remove} onLogged={reload} />}
     </TabScreen>
   )
 }
 
-function DayBody({ day, past, streakDays, onDelete }: {
+function DayBody({ day, past, streakDays, onDelete, onLogged }: {
   day: TodayData
   past: string | null
   streakDays: number | null
   onDelete: (m: Meal) => void
+  onLogged: () => Promise<void>
 }) {
   const { totals, targets } = day
   const left = targets.calories - totals.calories
@@ -121,6 +124,8 @@ function DayBody({ day, past, streakDays, onDelete }: {
         </span>
       </Link>
 
+      {!past && <SameAsYesterday today={day} onLogged={onLogged} />}
+
       <section className="mt-5 flex flex-col gap-2">
         <SectionTitle>{t('Meals')}</SectionTitle>
         {day.logs.length === 0 ? (
@@ -145,5 +150,48 @@ function DayBody({ day, past, streakDays, onDelete }: {
         )}
       </section>
     </>
+  )
+}
+
+/**
+ * "Same as yesterday's dinner?" when it's dinner time, nothing is logged as dinner yet today,
+ * and yesterday had one. One tap logs all of yesterday's meals with that label.
+ */
+function SameAsYesterday({ today, onLogged }: { today: TodayData; onLogged: () => Promise<void> }) {
+  const [yesterday, setYesterday] = useState<Meal[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const label = labelForNow()
+
+  useEffect(() => {
+    api.day(addDays(today.date, -1)).then((d) => setYesterday(d.logs)).catch(() => {})
+  }, [today.date])
+
+  const meals = yesterday.filter((m) => m.mealLabel === label)
+  if (!meals.length || today.logs.some((m) => m.mealLabel === label)) return null
+
+  async function logAll() {
+    setBusy(true)
+    setError(null)
+    try {
+      for (const m of meals) await api.logMeal(relogInput(m))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed')
+    }
+    setBusy(false)
+    // Also after a failure, so any meal that did get logged shows up
+    await onLogged().catch(() => {})
+  }
+
+  return (
+    <section className="mt-3 flex items-center gap-3 rounded-[14px] bg-surface py-3 pr-2.5 pl-3.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="text-xs font-semibold text-muted">{t(`Same as yesterday's ${label}?`)}</div>
+        <div className="truncate text-sm font-semibold">{meals.map((m) => m.description).join(', ')}</div>
+        <div className="text-xs text-muted">{num(meals.reduce((sum, m) => sum + m.calories, 0))} kcal</div>
+        {error && <div role="alert" className="text-xs text-danger">{t(error)}</div>}
+      </div>
+      <Pill onClick={logAll} disabled={busy}>{t('Log')}</Pill>
+    </section>
   )
 }

@@ -197,9 +197,10 @@ export function MacroTile({ label, value, target }: { label: string; value: numb
   return (
     <div className="flex flex-col gap-2 rounded-[14px] bg-surface px-3.5 py-3">
       <div className="text-xs font-semibold text-muted">{label}</div>
-      <div className="flex items-baseline gap-1">
-        <div className="text-[22px] leading-none font-bold tracking-[-0.02em]">{num(value)}</div>
-        <div className="text-xs text-muted">/ {num(target)} g</div>
+      {/* Whole grams: a decimal here pushed "/ 320 g" onto extra lines on narrow phones */}
+      <div className="flex flex-wrap items-baseline gap-x-1">
+        <div className="text-[22px] leading-none font-bold tracking-[-0.02em]">{num(Math.round(value))}</div>
+        <div className="text-xs whitespace-nowrap text-muted">/ {num(Math.round(target))} g</div>
       </div>
       <div className="h-1 overflow-hidden rounded-sm bg-line">
         <div className="h-1 rounded-sm bg-bar" style={{ width: `${pct}%` }} />

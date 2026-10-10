@@ -1,4 +1,4 @@
-import type { Macros, MealLabel } from '../api/client'
+import type { LogInput, Macros, Meal, MealLabel } from '../api/client'
 import { locale, t } from './i18n'
 
 export const MEAL_LABELS: MealLabel[] = ['breakfast', 'lunch', 'dinner', 'snack']
@@ -10,6 +10,13 @@ export function labelForNow(): MealLabel {
   if (h >= 17 && h < 22) return 'dinner'
   return 'snack'
 }
+
+/** A logged meal as a new log entry (items and all), for the current time of day. */
+export const relogInput = (m: Meal, logDate?: string): LogInput => ({
+  description: m.description, calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
+  mealLabel: labelForNow(), source: m.source as LogInput['source'], items: m.items ?? undefined,
+  confidence: m.confidence ?? undefined, aiNotes: m.aiNotes ?? undefined, logDate,
+})
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 

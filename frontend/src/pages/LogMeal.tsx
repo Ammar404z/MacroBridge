@@ -1,12 +1,13 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { api, type Analysis, type LogInput } from '../api/client'
+import { api, type Analysis, type LogInput, type Meal } from '../api/client'
 import { CameraIcon, ChevronIcon, FoodsIcon } from '../components/icons'
 import { ItemRows } from '../components/MealDetails'
 import {
-  Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PastDayNote, PrimaryButton, TextArea, TextButton,
+  Card, Checkbox, ErrorMessage, Field, FlowScreen, MealSegment, PastDayNote, Pill, PrimaryButton, SectionTitle, TextArea,
+  TextButton,
 } from '../components/ui'
-import { capitalize, dateQuery, labelForNow } from '../lib/format'
+import { capitalize, dateQuery, labelForNow, num, pcf, relogInput } from '../lib/format'
 import { t } from '../lib/i18n'
 import { toJpegBase64 } from '../lib/image'
 
@@ -26,6 +27,12 @@ export default function LogMeal() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [recent, setRecent] = useState<Meal[]>([])
+
+  // Nice to have, so failures stay quiet
+  useEffect(() => {
+    api.recentMeals().then(setRecent).catch(() => {})
+  }, [])
 
   function pickPhoto(file: File | null) {
     if (preview) URL.revokeObjectURL(preview)
@@ -75,6 +82,19 @@ export default function LogMeal() {
     setForm(null)
     setAnalysis(null)
     setError(null)
+  }
+
+  /** "Log" on a recent meal: saved straight away, no AI. */
+  async function relog(m: Meal) {
+    setError(null)
+    setBusy(true)
+    try {
+      await api.logMeal(relogInput(m, date ?? undefined))
+      navigate(`/${dateQuery(date)}`, { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed')
+      setBusy(false)
+    }
   }
 
   async function save(e: FormEvent) {
@@ -183,6 +203,23 @@ export default function LogMeal() {
           </Link>
           <ErrorMessage message={error} />
         </section>
+
+        {recent.length > 0 && (
+          <section className="mt-6 flex flex-col gap-2">
+            <SectionTitle>{t('Recent')}</SectionTitle>
+            {recent.map((m) => (
+              <div key={m.id} className="flex h-15 items-center gap-2 rounded-[14px] bg-surface pr-2 pl-3.5">
+                {/* Tap the meal to change it before saving, or Log to save it as it was */}
+                <button type="button" onClick={() => setForm(relogInput(m))} aria-label={t('Change {name} before logging', { name: m.description })}
+                  className="flex min-w-0 flex-1 flex-col gap-1 self-stretch justify-center text-left">
+                  <span className="truncate text-sm font-semibold">{m.description}</span>
+                  <span className="text-xs text-muted">{num(m.calories)} kcal · {pcf(m)}</span>
+                </button>
+                <Pill onClick={() => relog(m)} disabled={busy}>{t('Log')}</Pill>
+              </div>
+            ))}
+          </section>
+        )}
       </FlowScreen>
     </form>
   )

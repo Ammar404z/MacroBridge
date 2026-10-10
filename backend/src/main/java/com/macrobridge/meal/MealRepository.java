@@ -77,6 +77,26 @@ public class MealRepository {
                 .list();
     }
 
+    /**
+     * The latest meal of each distinct name, newest first, for one-tap re-logging.
+     * Meals from saved foods are left out; those are re-logged from My foods.
+     */
+    public List<MealDto> recent(UUID userId, int limit) {
+        return jdbc.sql("""
+                select * from (
+                  select distinct on (lower(description)) %s from meals
+                  where user_id = :userId and source <> 'custom_food'
+                  order by lower(description), logged_at desc
+                ) latest
+                order by logged_at desc
+                limit :limit
+                """.formatted(COLUMNS))
+                .param("userId", userId)
+                .param("limit", limit)
+                .query(MealDto.class)
+                .list();
+    }
+
     /** Empty if the meal doesn't exist or belongs to someone else. A null logDate keeps the current day. */
     public Optional<MealDto> update(UUID userId, UUID id, EditMealRequest req) {
         return jdbc.sql("""

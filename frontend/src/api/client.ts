@@ -194,6 +194,7 @@ export const api = {
   today: () => request<Today>('GET', '/meals/today'),
   day: (date: string) => request<Today>('GET', `/meals/day/${date}`),
   history: (days = 30) => request<History>('GET', `/meals/history?days=${days}`),
+  recentMeals: () => request<Meal[]>('GET', '/meals/recent'),
   meal: (id: string) => request<Meal>('GET', `/meals/${id}`),
   editMeal: (id: string, input: EditMealInput) => request<Meal>('PUT', `/meals/${id}`, input),
   deleteMeal: (id: string) => request<null>('DELETE', `/meals/${id}`),

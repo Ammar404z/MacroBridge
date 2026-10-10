@@ -6,12 +6,12 @@ Feedback and ideas from friends testing the app.
 - [x] Tap a meal to see what's in it (items, portions, macros): your own and friends'
 - [x] Keep the photo you snapped and show it on the meal, for you and your friends
 - [x] Progress screen: 30 days of calories and protein vs target, logging streak, days on target
+- [x] Recent meals on Log a meal and "Same as yesterday's ..." on Today: one-tap re-logging, no AI
 
 ## Later
 - [ ] Take a picture of the fridge and get meal suggestions with recipes
 - [ ] Save recipes from TikTok or Instagram videos
 - [ ] Track vitamins and minerals, not just macros
-- [ ] Recent meals and "same as yesterday" for one-tap re-logging, no AI needed
 - [ ] Correct the AI estimate by typing ("it was 200 g of rice, not 150") instead of editing numbers
 - [ ] Target calculator: height, weight, age, activity and goal give suggested calories and macros
 - [ ] Weight log, shown on the progress chart

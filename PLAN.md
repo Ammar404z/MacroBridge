@@ -129,6 +129,7 @@ POST /api/meals/log       { description, calories, protein, carbs, fat, mealLabe
 GET  /api/meals/today     → { date, logs[], totals, targets }
 GET  /api/meals/day/{date} → same shape, for any day (YYYY-MM-DD)
 GET  /api/meals/history?days=30 → { from, to, targets, days[{ date, meals, totals }] }  (days with meals only)
+GET  /api/meals/recent    → your latest meal of each distinct name (max 15, newest first; saved foods left out)
 GET  /api/meals/{id}      → meal (incl. logDate, items, hasPhoto)
 GET  /api/meals/{id}/photo → image/jpeg   (yours, or a friend's who shares meals)
 PUT  /api/meals/{id}      { description, calories, protein, carbs, fat, mealLabel?, logDate? }  (logDate can't be in the future)
